@@ -1,3 +1,6 @@
+from utilities.check_solvable import check_solvable
+
+
 def read_puzzle(filename):
     board = []
     with open(filename, "r") as f:
@@ -23,6 +26,13 @@ def print_board(board):
 
 
 if __name__ == "__main__":
-    puzzle = read_puzzle("puzzle.txt")
+    puzzle = read_puzzle("test_puzzles/puzzle_02.txt")
     print("Initial Puzzle:")
+
+    if check_solvable(puzzle):
+        print("Puzzle is solvable! Starting solving steps...")
+        # You can add your human-like solving logic here
+    else:
+        print("Puzzle is NOT solvable. Please check the input.")
+
     print_board(puzzle)
