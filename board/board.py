@@ -3,7 +3,7 @@ from .cell import Cell
 
 class SudokuBoard:
     def __init__(self, grid):  # grid is a 9x9 list of lists
-        self.grid = [[Cell(val if val != 0 else None) for val in row] for row in grid]
+        self.grid = [[Cell(val, is_initial=(val != 0)) for val in row] for row in grid]
 
     def get_row(self, r):
         return self.grid[r]
@@ -32,8 +32,8 @@ class SudokuBoard:
                     | {c2.value for c2 in self.get_box(r, c) if c2.is_solved()}
                 )
 
-                old_candidates = cell.candidates.copy()
-                cell.candidates -= used_values
+                old_candidates = cell.get_candidates().copy()
+                cell.set_candidates(cell.get_candidates() - used_values)
 
                 if old_candidates != cell.candidates:
                     print(
