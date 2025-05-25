@@ -16,4 +16,7 @@ else:
     exit()
 
 board = SudokuBoard(puzzle)
-board.display()
+board.display_simple()
+print("*" * 30)
+print("Diplaying with candidates:")
+board.display_with_candidates()

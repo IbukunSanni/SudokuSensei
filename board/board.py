@@ -40,7 +40,7 @@ class SudokuBoard:
                         f"Updated candidates at ({r},{c}): {old_candidates} → {cell.candidates}"
                     )
 
-    def display(self):
+    def display_simple(self):
         for i, row in enumerate(self.grid):
             if i % 3 == 0 and i != 0:
                 print("-" * 21)
@@ -50,3 +50,58 @@ class SudokuBoard:
                     for j, cell in enumerate(row)
                 )
             )
+
+    def display_with_candidates(self):
+        def format_candidates(candidates):
+            """
+            Returns a list of 3 strings representing the candidate mini-grid:
+            1 2 3
+            4 5 6
+            7 8 9
+            Shows '.' where a candidate is missing.
+            """
+            return [
+                "".join(str(i) if i in candidates else "." for i in range(1, 4)),
+                "".join(str(i) if i in candidates else "." for i in range(4, 7)),
+                "".join(str(i) if i in candidates else "." for i in range(7, 10)),
+            ]
+
+        def format_value(value):
+            """Center a solved value in the middle of a 3x3 space"""
+            return ["...", f".{value}.", "..."]
+
+        num_rows = len(self.grid)
+        num_cols = len(self.grid[0]) if num_rows > 0 else 0
+        sub_rows = []
+
+        for r in range(num_rows):
+            # Each full row of cells will produce 3 display lines
+            row_lines = ["", "", ""]
+
+            for c in range(num_cols):
+                cell = self.grid[r][c]
+
+                # Choose how to render this cell: either its value or its candidates
+                cell_grid = (
+                    format_value(cell.get_value())
+                    if cell.is_solved()
+                    else format_candidates(cell.get_candidates())
+                )
+
+                # Add the mini-grid lines to the current row_lines
+                for i in range(3):
+                    row_lines[i] += cell_grid[i]
+                    row_lines[i] += " || " if c in [2, 5] else " | "
+
+            # Add the 3 constructed lines to the output
+            sub_rows.extend(row_lines)
+
+            # After every 3 rows, add a thick or thin horizontal border
+            if r in [2, 5, 8]:
+                sub_rows.append("=" * (num_cols * 6 + 1))
+            else:
+                sub_rows.append("-" * (num_cols * 6 + 1))
+
+        # Print the full board display
+        for sub_row in sub_rows:
+            print(sub_row)
