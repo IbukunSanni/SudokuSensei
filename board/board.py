@@ -2,7 +2,7 @@ from .cell import Cell
 
 
 class SudokuBoard:
-    def __init__(self, grid):  # grid is a 9x9 list of lists
+    def __init__(self, grid):  # grid is a 9x9 list of lists of integers
         self.grid = [[Cell(val, is_initial=(val != 0)) for val in row] for row in grid]
 
     def get_row(self, r):
@@ -27,17 +27,17 @@ class SudokuBoard:
                     continue
 
                 used_values = (
-                    {c2.value for c2 in self.get_row(r) if c2.is_solved()}
-                    | {c2.value for c2 in self.get_col(c) if c2.is_solved()}
-                    | {c2.value for c2 in self.get_box(r, c) if c2.is_solved()}
+                    {c2.get_value() for c2 in self.get_row(r) if c2.is_solved()}
+                    | {c2.get_value() for c2 in self.get_col(c) if c2.is_solved()}
+                    | {c2.get_value() for c2 in self.get_box(r, c) if c2.is_solved()}
                 )
 
                 old_candidates = cell.get_candidates().copy()
                 cell.set_candidates(cell.get_candidates() - used_values)
 
-                if old_candidates != cell.candidates:
+                if old_candidates != cell.get_candidates():
                     print(
-                        f"Updated candidates at ({r},{c}): {old_candidates} → {cell.candidates}"
+                        f"Updated candidates at ({r},{c}): {old_candidates} → {cell.get_candidates()}"
                     )
 
     def display_simple(self):

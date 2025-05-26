@@ -1,34 +1,39 @@
-def get_candidates(board, row, col):
-    if board[row][col] != 0:
-        return []  # already filled
-
-    used = set()
-    # row
-    used.update(board[row])
-    # column
-    used.update(board[r][col] for r in range(9))
-    # box
-    start_row = (row // 3) * 3
-    start_col = (col // 3) * 3
-    for r in range(start_row, start_row + 3):
-        for c in range(start_col, start_col + 3):
-            used.add(board[r][c])
-    return [n for n in range(1, 10) if n not in used]
+# logic/naked_single.py
 
 
-def apply_naked_singles(board):
+def apply_one_naked_single(board):
     """
-    Applies Naked Singles technique once over the board.
+    Apply naked single technique once on the board.
     Returns:
-        updated_board (list of lists): board after filling naked singles.
-        changed (bool): True if at least one cell was filled, else False.
+      changed (bool): True if a cell was filled
+      position (tuple): (row, col) of the filled cell or None
+    """
+    board.update_candidates()  # update candidates for all cells
+
+    for r in range(9):
+        for c in range(9):
+            cell = board.grid[r][c]
+            if not cell.is_solved():
+                candidates = cell.get_candidates()
+                if len(candidates) == 1:
+                    value = candidates.pop()
+                    cell.set_value(value)
+                    cell.set_candidates(set())
+                    print(f"Naked Single: Filled cell at ({r}, {c}) with {value}")
+                    return True, (r, c)
+    return False, None
+
+
+def apply_all_naked_singles(board):
+    """
+    Repeatedly apply naked single until no more changes.
+    Returns:
+      changed (bool): True if any cell was filled during the process
     """
     changed = False
-    for row in range(9):
-        for col in range(9):
-            if board[row][col] == 0:
-                candidates = get_candidates(board, row, col)
-                if len(candidates) == 1:
-                    board[row][col] = candidates[0]
-                    changed = True
-    return board, changed
+    while True:
+        step_changed, pos = apply_one_naked_single(board)
+        if not step_changed:
+            break
+        changed = True
+    return changed
