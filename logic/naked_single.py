@@ -1,4 +1,5 @@
 # logic/naked_single.py
+from helpers.get_location import get_cell_location
 
 
 def apply_one_naked_single(board):
@@ -19,7 +20,10 @@ def apply_one_naked_single(board):
                     value = candidates.pop()
                     cell.set_value(value)
                     cell.set_candidates(set())
-                    print(f"Naked Single: Filled cell at ({r}, {c}) with {value}")
+                    print()
+                    print(
+                        f"Naked Single: Filled cell at {get_cell_location(r, c)} with {value}"
+                    )
                     return True, (r, c)
     return False, None
 

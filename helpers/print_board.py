@@ -3,7 +3,7 @@ from colorama import Fore, Style, init
 init(autoreset=True)  # This resets color after each print so it doesn't bleed
 
 
-def print_board(board):
+def print_input_puzzle(board):
     for i, row in enumerate(board):
         if i % 3 == 0 and i != 0:
             print("-" * 21)

@@ -1,4 +1,5 @@
 from .cell import Cell
+from helpers.get_location import get_cell_location
 
 
 class SudokuBoard:
@@ -37,7 +38,7 @@ class SudokuBoard:
 
                 if old_candidates != cell.get_candidates():
                     print(
-                        f"Updated candidates at ({r},{c}): {old_candidates} → {cell.get_candidates()}"
+                        f"Updated candidates at {get_cell_location(r, c)}: {old_candidates} → {cell.get_candidates()}"
                     )
 
     def display_simple(self):
