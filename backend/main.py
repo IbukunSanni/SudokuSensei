@@ -49,4 +49,15 @@ def solve_sudoku(data: PuzzleInput):
 
     solved_grid = [[cell.get_value() for cell in row] for row in board.grid]
 
-    return {"solved": solved_grid}
+    message = (
+        "Puzzle solved successfully!"
+        if board.is_solved()
+        else "Partial solution after applying techniques"
+    )
+
+    return {
+        "solved_grid": solved_grid,
+        "is_solved": board.is_solved(),
+        "incomplete_cells": incomplete_cells,
+        "message": message,
+    }
