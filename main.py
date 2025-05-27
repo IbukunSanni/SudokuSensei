@@ -5,6 +5,7 @@ from helpers.check_solvable import check_solvable
 from logic.naked_single import apply_all_naked_singles
 from logic.hidden_single import apply_all_hidden_singles
 from logic.hidden_pairs import apply_all_hidden_pairs
+from logic.naked_pairs import apply_all_naked_pairs  # <-- Import naked pairs here
 
 from board.board import SudokuBoard
 
@@ -64,6 +65,14 @@ def main():
             any_changed = True
         else:
             print("No hidden pairs found.")
+
+        changed = apply_all_naked_pairs(board)  # <-- Apply naked pairs here
+        if changed:
+            print("\nBoard after applying naked pairs:")
+            board.display_simple()
+            any_changed = True
+        else:
+            print("No naked pairs found.")
 
         if board.is_solved():
             print("\nPuzzle solved successfully!")
