@@ -1,4 +1,4 @@
-from get_location import get_cell_location
+from helpers.get_location import get_cell_location
 
 
 def apply_one_hidden_pair(board):

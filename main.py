@@ -4,39 +4,78 @@ from helpers.check_solvable import check_solvable
 
 from logic.naked_single import apply_all_naked_singles
 from logic.hidden_single import apply_all_hidden_singles
+from logic.hidden_pairs import apply_all_hidden_pairs
 
 from board.board import SudokuBoard
 
-puzzle = read_puzzle("test_puzzles/puzzle_hidden_single.txt")
-print("Initial Puzzle:")
-print_input_puzzle(puzzle)
 
-if check_solvable(puzzle):
-    print("Puzzle is solvable! Starting solving steps...")
-    # You can add your human-like solving logic here
-else:
-    print("Puzzle is NOT solvable. Please check the input.")
-    exit()
+def main():
+    puzzle = read_puzzle("test_puzzles/puzzle_hidden_pairs.txt")
+    print("Initial Puzzle:")
+    print_input_puzzle(puzzle)
 
-board = SudokuBoard(puzzle)
-board.display_simple()
-print("*" * 30)
-print("Diplaying with candidates:")
-board.display_with_candidates()
+    if not check_solvable(puzzle):
+        print("Puzzle is NOT solvable. Please check the input.")
+        return
 
-changed = apply_all_naked_singles(board)
-if changed:
-    print("\nBoard after applying all naked singles:")
-else:
-    print("No naked singles found on this board.")
+    print("Puzzle is solvable! Starting solving steps...\n")
 
-board.display_simple()
+    board = SudokuBoard(puzzle)
+    board.display_simple()
+    print("*" * 30)
+    print("Displaying with candidates:")
+    board.display_with_candidates()
 
-# Now try applying hidden singles
-changed = apply_all_hidden_singles(board)
-if changed:
-    print("\nBoard after applying hidden singles:")
-else:
-    print("No hidden singles found.")
+    # Add is_solved method if not present
+    if not hasattr(board, "is_solved"):
 
-board.display_simple()
+        def is_solved(self):
+            for r in range(9):
+                for c in range(9):
+                    if not self.grid[r][c].is_solved():
+                        return False
+            return True
+
+        setattr(SudokuBoard, "is_solved", is_solved)
+
+    while True:
+        any_changed = False
+
+        changed = apply_all_naked_singles(board)
+        if changed:
+            print("\nBoard after applying all naked singles:")
+            board.display_simple()
+            any_changed = True
+        else:
+            print("No naked singles found on this board.")
+
+        changed = apply_all_hidden_singles(board)
+        if changed:
+            print("\nBoard after applying hidden singles:")
+            board.display_simple()
+            any_changed = True
+        else:
+            print("No hidden singles found.")
+
+        changed = apply_all_hidden_pairs(board)
+        if changed:
+            print("\nBoard after applying hidden pairs:")
+            board.display_simple()
+            any_changed = True
+        else:
+            print("No hidden pairs found.")
+
+        if board.is_solved():
+            print("\nPuzzle solved successfully!")
+            break
+
+        if not any_changed:
+            print("\nNo more techniques can be applied. Stopping.")
+            break
+
+    print("\nFinal board state:")
+    board.display_simple()
+
+
+if __name__ == "__main__":
+    main()
