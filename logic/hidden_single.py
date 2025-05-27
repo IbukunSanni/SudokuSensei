@@ -1,10 +1,9 @@
+from helpers.get_location import get_cell_location
+
+
 def apply_one_hidden_single(board):
     board.update_candidates()
 
-    # Check all units: rows, columns, boxes
-    # Return True and cell position if a hidden single is found and applied
-
-    # Helper to find hidden singles in a unit of cells
     def find_hidden_single_in_unit(cells):
         candidate_counts = {n: [] for n in range(1, 10)}
         for idx, cell in enumerate(cells):
@@ -24,7 +23,8 @@ def apply_one_hidden_single(board):
             cell = cells[pos]
             cell.set_value(num)
             cell.set_candidates(set())
-            print(f"Hidden Single in row {r} at col {pos}: placed {num}")
+            location = get_cell_location(r, pos)
+            print(f"Hidden Single placed {num} at {location}")
             return True, (r, pos)
 
     # Check columns
@@ -35,7 +35,8 @@ def apply_one_hidden_single(board):
             cell = cells[pos]
             cell.set_value(num)
             cell.set_candidates(set())
-            print(f"Hidden Single in col {c} at row {pos}: placed {num}")
+            location = get_cell_location(pos, c)
+            print(f"Hidden Single placed {num} at {location}")
             return True, (pos, c)
 
     # Check boxes
@@ -48,14 +49,12 @@ def apply_one_hidden_single(board):
             pos, num = find_hidden_single_in_unit(cells)
             if pos is not None:
                 cell = cells[pos]
-                # Calculate real row, col
                 row = br * 3 + pos // 3
                 col = bc * 3 + pos % 3
                 cell.set_value(num)
                 cell.set_candidates(set())
-                print(
-                    f"Hidden Single in box ({br},{bc}) at ({row},{col}): placed {num}"
-                )
+                location = get_cell_location(row, col)
+                print(f"Hidden Single placed {num} at {location}")
                 return True, (row, col)
 
     return False, None

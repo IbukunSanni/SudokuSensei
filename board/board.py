@@ -106,3 +106,33 @@ class SudokuBoard:
         # Print the full board display
         for sub_row in sub_rows:
             print(sub_row)
+
+    def is_solved(self):
+        for r in range(9):
+            for c in range(9):
+                cell = self.grid[r][c]
+                if not cell.is_solved():
+                    return False
+
+                val = cell.get_value()
+                # Check row uniqueness
+                row_vals = [self.grid[r][j].get_value() for j in range(9) if j != c]
+                if val in row_vals:
+                    return False
+                # Check column uniqueness
+                col_vals = [self.grid[i][c].get_value() for i in range(9) if i != r]
+                if val in col_vals:
+                    return False
+                # Check box uniqueness
+                start_r = (r // 3) * 3
+                start_c = (c // 3) * 3
+                box_vals = [
+                    self.grid[i][j].get_value()
+                    for i in range(start_r, start_r + 3)
+                    for j in range(start_c, start_c + 3)
+                    if (i, j) != (r, c)
+                ]
+                if val in box_vals:
+                    return False
+
+        return True
