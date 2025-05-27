@@ -58,6 +58,5 @@ def solve_sudoku(data: PuzzleInput):
     return {
         "solved_grid": solved_grid,
         "is_solved": board.is_solved(),
-        "incomplete_cells": incomplete_cells,
         "message": message,
     }
