@@ -42,6 +42,14 @@ def main():
     while True:
         any_changed = False
 
+        changed = apply_all_naked_pairs(board)  # <-- Apply naked pairs here
+        if changed:
+            print("\nBoard after applying naked pairs:")
+            board.display_simple()
+            any_changed = True
+        else:
+            print("No naked pairs found.")
+
         changed = apply_all_naked_singles(board)
         if changed:
             print("\nBoard after applying all naked singles:")
@@ -66,14 +74,6 @@ def main():
         else:
             print("No hidden pairs found.")
 
-        changed = apply_all_naked_pairs(board)  # <-- Apply naked pairs here
-        if changed:
-            print("\nBoard after applying naked pairs:")
-            board.display_simple()
-            any_changed = True
-        else:
-            print("No naked pairs found.")
-
         if board.is_solved():
             print("\nPuzzle solved successfully!")
             break
@@ -83,7 +83,7 @@ def main():
             break
 
     print("\nFinal board state:")
-    board.display_simple()
+    board.display_with_candidates()
 
 
 if __name__ == "__main__":
