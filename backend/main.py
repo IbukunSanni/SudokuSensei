@@ -83,7 +83,7 @@ def main():
             break
 
     print("\nFinal board state:")
-    board.display_with_candidates()
+    board.display_simple()
 
 
 if __name__ == "__main__":
