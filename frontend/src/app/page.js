@@ -41,7 +41,7 @@ export default function Page() {
     setLoading(true);
     try {
       const response = await axios.post(`${BACKEND_URL}/solve`, { puzzle });
-      console.log(response.data);
+      
       
       setResult(response.data);
     } catch (error) {
