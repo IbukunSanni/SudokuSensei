@@ -7,8 +7,18 @@ from logic.naked_single import apply_all_naked_singles
 from logic.hidden_single import apply_all_hidden_singles
 from logic.hidden_pairs import apply_all_hidden_pairs
 from logic.naked_pairs import apply_all_naked_pairs  # <-- Import naked pairs here
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class PuzzleInput(BaseModel):
