@@ -41,7 +41,7 @@ def is_valid_puzzle(puzzle: List[List[int]]) -> bool:
 @app.post("/solve")
 def solve_sudoku(data: PuzzleInput):
     if not is_valid_puzzle(data.puzzle):
-        raise HTTPException(status_code=400, detail="Invalid puzzle format")
+        raise HTTPException(status_code=400, detail="Puzzle is invalid")
 
     board = SudokuBoard(data.puzzle)
 
