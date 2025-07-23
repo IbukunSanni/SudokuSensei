@@ -23,7 +23,7 @@ const defaultPuzzle = [
 
 
 // Helper to generate proper Sudoku board styling
-function getSudokuCellStyle(rowIdx, colIdx, isInput = true) {
+function getSudokuCellStyle(rowIdx, colIdx, isInput = true, isDuplicate = false) {
   const baseStyle = {
     width: "3rem",
     height: "3rem",
@@ -33,6 +33,13 @@ function getSudokuCellStyle(rowIdx, colIdx, isInput = true) {
     border: "1px solid #ccc",
     backgroundColor: isInput ? "white" : "#f8f9fa",
   };
+
+  // Highlight duplicate cells
+  if (isDuplicate) {
+    baseStyle.backgroundColor = isInput ? "#ffebee" : "#ffcdd2";
+    baseStyle.color = "#d32f2f";
+    baseStyle.border = "2px solid #f44336";
+  }
 
   // Thick borders for 3x3 box separation
   if (colIdx % 3 === 0 && colIdx !== 0) baseStyle.borderLeft = "3px solid #333";
@@ -56,6 +63,67 @@ export default function Page() {
   const [puzzle, setPuzzle] = useState(emptyGrid);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Function to detect duplicates in rows, columns, and 3x3 boxes
+  const getDuplicateCells = (grid) => {
+    const duplicates = new Set();
+
+    // Check rows
+    for (let row = 0; row < 9; row++) {
+      const seen = new Map();
+      for (let col = 0; col < 9; col++) {
+        const value = grid[row][col];
+        if (value !== 0) {
+          if (seen.has(value)) {
+            duplicates.add(`${row}-${col}`);
+            duplicates.add(`${row}-${seen.get(value)}`);
+          } else {
+            seen.set(value, col);
+          }
+        }
+      }
+    }
+
+    // Check columns
+    for (let col = 0; col < 9; col++) {
+      const seen = new Map();
+      for (let row = 0; row < 9; row++) {
+        const value = grid[row][col];
+        if (value !== 0) {
+          if (seen.has(value)) {
+            duplicates.add(`${row}-${col}`);
+            duplicates.add(`${seen.get(value)}-${col}`);
+          } else {
+            seen.set(value, row);
+          }
+        }
+      }
+    }
+
+    // Check 3x3 boxes
+    for (let boxRow = 0; boxRow < 3; boxRow++) {
+      for (let boxCol = 0; boxCol < 3; boxCol++) {
+        const seen = new Map();
+        for (let row = boxRow * 3; row < boxRow * 3 + 3; row++) {
+          for (let col = boxCol * 3; col < boxCol * 3 + 3; col++) {
+            const value = grid[row][col];
+            if (value !== 0) {
+              if (seen.has(value)) {
+                duplicates.add(`${row}-${col}`);
+                duplicates.add(seen.get(value));
+              } else {
+                seen.set(value, `${row}-${col}`);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return duplicates;
+  };
+
+  const duplicateCells = getDuplicateCells(puzzle);
 
   const handleChange = (row, col, value) => {
     if (value === "" || /^[1-9]$/.test(value)) {
@@ -151,25 +219,58 @@ export default function Page() {
             }}
           >
             {puzzle.map((row, rIdx) =>
-              row.map((value, cIdx) => (
-                <input
-                  key={`${rIdx}-${cIdx}`}
-                  type="text"
-                  maxLength={1}
-                  value={value === 0 ? "" : value}
-                  onChange={(e) => handleChange(rIdx, cIdx, e.target.value)}
-                  style={{
-                    ...getSudokuCellStyle(rIdx, cIdx, true),
-                    outline: "none",
-                    transition: "background-color 0.2s",
-                  }}
-                  onFocus={(e) => (e.target.style.backgroundColor = "#e3f2fd")}
-                  onBlur={(e) => (e.target.style.backgroundColor = "white")}
-                />
-              ))
+              row.map((value, cIdx) => {
+                const cellKey = `${rIdx}-${cIdx}`;
+                const isDuplicate = duplicateCells.has(cellKey);
+                return (
+                  <input
+                    key={cellKey}
+                    type="text"
+                    maxLength={1}
+                    value={value === 0 ? "" : value}
+                    onChange={(e) => handleChange(rIdx, cIdx, e.target.value)}
+                    style={{
+                      ...getSudokuCellStyle(rIdx, cIdx, true, isDuplicate),
+                      outline: "none",
+                      transition: "background-color 0.2s",
+                    }}
+                    onFocus={(e) => {
+                      if (!isDuplicate) {
+                        e.target.style.backgroundColor = "#e3f2fd";
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (!isDuplicate) {
+                        e.target.style.backgroundColor = "white";
+                      }
+                    }}
+                  />
+                );
+              })
             )}
           </div>
         </div>
+
+        {/* Duplicate warning */}
+        {duplicateCells.size > 0 && (
+          <div
+            style={{
+              backgroundColor: "#ffebee",
+              border: "1px solid #f44336",
+              borderRadius: "5px",
+              padding: "0.75rem",
+              margin: "1rem 0",
+              textAlign: "center",
+            }}
+          >
+            <span style={{ color: "#d32f2f", fontWeight: "bold" }}>
+              ⚠️ Duplicate numbers detected! 
+            </span>
+            <span style={{ color: "#666", marginLeft: "0.5rem" }}>
+              Highlighted cells violate Sudoku rules.
+            </span>
+          </div>
+        )}
 
         {/* Buttons */}
         <div
