@@ -38,6 +38,22 @@ def is_valid_puzzle(puzzle: List[List[int]]) -> bool:
     return True
 
 
+@app.get("/")
+def health_check():
+    return {"status": "SudokuSensei backend is running!", "version": "1.0"}
+
+
+@app.get("/health")
+def detailed_health():
+    return {
+        "status": "healthy",
+        "service": "SudokuSensei API",
+        "endpoints": ["/", "/health", "/solve"],
+        "cors_enabled": True,
+        "frontend_url": "http://localhost:3000",
+    }
+
+
 @app.post("/solve")
 def solve_sudoku(data: PuzzleInput):
     if not is_valid_puzzle(data.puzzle):
