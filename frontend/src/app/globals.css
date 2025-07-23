@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Using inline styles for components - minimal global styles */
 
 /* Reset some default styles */
 * {
