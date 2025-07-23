@@ -9,12 +9,17 @@ from logic.hidden_pairs import apply_all_hidden_pairs
 from logic.naked_pairs import apply_all_naked_pairs  # <-- Import naked pairs here
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+
+app = FastAPI(
+    title="SudokuSensei API",
+    version="1.0",
+    json_indent=2,
+)
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # your frontend URL
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
