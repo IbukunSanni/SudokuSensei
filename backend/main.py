@@ -1,23 +1,45 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List
+"""
+Main FastAPI application for SudokuSensei.
+This file serves as a bridge during refactoring, using the new service architecture
+while maintaining backward compatibility.
+"""
 
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
+from typing import List, Dict, Any, Optional
+
+# Import services
+from services.solver_service import SudokuSolver
+from services.validation_service import (
+    is_valid_format,
+    is_solvable,
+    has_unique_solution,
+)
+
+# Legacy imports for backward compatibility
 from board.board import SudokuBoard
 from logic.naked_single import apply_all_naked_singles
 from logic.hidden_single import apply_all_hidden_singles
 from logic.hidden_pairs import apply_all_hidden_pairs
-from logic.naked_pairs import apply_all_naked_pairs  # <-- Import naked pairs here
+from logic.naked_pairs import apply_all_naked_pairs
 from helpers.check_solvable import check_solvable
 from fastapi.middleware.cors import CORSMiddleware
 
 
+# Initialize services
+solver = SudokuSolver()
+
+
+# Create FastAPI app
 app = FastAPI(
     title="SudokuSensei API",
     version="1.0",
     json_indent=2,
+    description="An educational Sudoku solver with step-by-step explanations",
 )
 
 
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -27,91 +49,46 @@ app.add_middleware(
 )
 
 
+# Data models
 class PuzzleInput(BaseModel):
-    puzzle: List[List[int]]  # 9x9 grid
+    """Input model for Sudoku puzzle"""
+
+    puzzle: List[List[int]] = Field(
+        ...,
+        description="9x9 Sudoku grid with 0 for empty cells and 1-9 for filled cells",
+    )
+
+
+class SolveResponse(BaseModel):
+    """Response model for solved puzzle"""
+
+    solved_grid: List[List[int]] = Field(..., description="The solved 9x9 grid")
+    is_solved: bool = Field(..., description="Whether the puzzle was completely solved")
+    message: str = Field(..., description="Status message about the solving process")
+    techniques_applied: Optional[List[str]] = Field(
+        default=None, description="List of techniques applied"
+    )
 
 
 class ErrorResponse(BaseModel):
+    """Error response model"""
+
     error: str
     error_type: str
     message: str
     suggestions: List[str] = []
 
 
-def is_valid_puzzle(puzzle: List[List[int]]) -> bool:
-    # Basic validation: 9x9 grid with digits 0-9
-    if len(puzzle) != 9:
-        return False
-    for row in puzzle:
-        if len(row) != 9:
-            return False
-        for val in row:
-            if not (0 <= val <= 9):
-                return False
-    return True
-
-
-def has_unique_solution(puzzle: List[List[int]]) -> bool:
-    """
-    Check if the puzzle has exactly one unique solution.
-    Returns True if unique, False if multiple solutions exist.
-    """
-
-    def get_candidates(board, row, col):
-        used = set()
-        # Check row
-        used.update(board[row])
-        # Check column
-        used.update(board[r][col] for r in range(9))
-        # Check 3x3 box
-        start_row = (row // 3) * 3
-        start_col = (col // 3) * 3
-        for r in range(start_row, start_row + 3):
-            for c in range(start_col, start_col + 3):
-                used.add(board[r][c])
-        return [n for n in range(1, 10) if n not in used]
-
-    def find_empty_cell(board):
-        for r in range(9):
-            for c in range(9):
-                if board[r][c] == 0:
-                    return (r, c)
-        return None
-
-    def count_solutions(board, max_solutions=2):
-        """Count solutions up to max_solutions (for efficiency)"""
-        cell = find_empty_cell(board)
-        if not cell:
-            return 1  # Found a complete solution
-
-        row, col = cell
-        solution_count = 0
-
-        for num in get_candidates(board, row, col):
-            board[row][col] = num
-            solution_count += count_solutions(board, max_solutions)
-            board[row][col] = 0  # backtrack
-
-            # Early exit if we find more than one solution
-            if solution_count >= max_solutions:
-                return solution_count
-
-        return solution_count
-
-    # Create a copy to avoid modifying the original
-    board_copy = [row[:] for row in puzzle]
-    solution_count = count_solutions(board_copy, max_solutions=2)
-
-    return solution_count == 1
-
-
+# API endpoints
 @app.get("/")
 def health_check():
+    """Basic health check endpoint"""
     return {"status": "SudokuSensei backend is running!", "version": "1.0"}
 
 
 @app.get("/health")
 def detailed_health():
+    """Detailed health check with service information"""
     return {
         "status": "healthy",
         "service": "SudokuSensei API",
@@ -121,9 +98,22 @@ def detailed_health():
     }
 
 
-@app.post("/solve")
+@app.post("/solve", response_model=SolveResponse)
 def solve_sudoku(data: PuzzleInput):
-    if not is_valid_puzzle(data.puzzle):
+    """
+    Solve a Sudoku puzzle using advanced logical techniques.
+
+    Args:
+        data: Puzzle input containing 9x9 grid
+
+    Returns:
+        Solved puzzle with metadata
+
+    Raises:
+        HTTPException: If puzzle is invalid or unsolvable
+    """
+    # Validate puzzle format
+    if not is_valid_format(data.puzzle):
         raise HTTPException(
             status_code=400,
             detail={
@@ -138,8 +128,8 @@ def solve_sudoku(data: PuzzleInput):
             },
         )
 
-    # Check if puzzle is solvable before attempting logical techniques
-    if not check_solvable(data.puzzle):
+    # Check if puzzle is solvable
+    if not is_solvable(data.puzzle):
         raise HTTPException(
             status_code=422,
             detail={
@@ -154,7 +144,7 @@ def solve_sudoku(data: PuzzleInput):
             },
         )
 
-    # Check if puzzle has a unique solution (important for educational purposes)
+    # Check if puzzle has a unique solution
     if not has_unique_solution(data.puzzle):
         raise HTTPException(
             status_code=422,
@@ -171,30 +161,12 @@ def solve_sudoku(data: PuzzleInput):
             },
         )
 
-    board = SudokuBoard(data.puzzle)
+    # Use the new solver service
+    result = solver.solve(data.puzzle)
 
-    changed = True
-    while changed:
-        changed = False
-        if apply_all_naked_singles(board):
-            changed = True
-        if apply_all_hidden_singles(board):
-            changed = True
-        if apply_all_hidden_pairs(board):
-            changed = True
-        if apply_all_naked_pairs(board):  # naked pairs applied here
-            changed = True
-
-    solved_grid = [[cell.get_value() for cell in row] for row in board.grid]
-
-    message = (
-        "Puzzle solved successfully!"
-        if board.is_solved()
-        else "Partial solution after applying techniques"
+    return SolveResponse(
+        solved_grid=result["solved_grid"],
+        is_solved=result["is_solved"],
+        message=result["message"],
+        techniques_applied=result.get("techniques_applied"),
     )
-
-    return {
-        "solved_grid": solved_grid,
-        "is_solved": board.is_solved(),
-        "message": message,
-    }
