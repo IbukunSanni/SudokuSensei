@@ -20,17 +20,24 @@ const defaultPuzzle = [
   [0, 0, 0, 0, 8, 0, 0, 7, 9],
 ];
 
-
-
 // Helper to generate proper Sudoku board styling
-function getSudokuCellStyle(rowIdx, colIdx, isInput = true, isDuplicate = false, isInAffectedUnit = false) {
+function getSudokuCellStyle(
+  rowIdx,
+  colIdx,
+  isInput = true,
+  isDuplicate = false,
+  isInAffectedUnit = false
+) {
   const baseStyle = {
     width: "3rem",
     height: "3rem",
     textAlign: "center",
     fontSize: "1.2rem",
     fontWeight: "bold",
-    border: "1px solid #ccc",
+    borderTop: "1px solid #ccc",
+    borderRight: "1px solid #ccc",
+    borderBottom: "1px solid #ccc",
+    borderLeft: "1px solid #ccc",
     backgroundColor: isInput ? "white" : "#f8f9fa",
   };
 
@@ -38,23 +45,41 @@ function getSudokuCellStyle(rowIdx, colIdx, isInput = true, isDuplicate = false,
   if (isDuplicate) {
     baseStyle.backgroundColor = isInput ? "#ffebee" : "#ffcdd2";
     baseStyle.color = "#d32f2f";
-    baseStyle.border = "2px solid #f44336";
+    baseStyle.borderTop = "2px solid #f44336";
+    baseStyle.borderRight = "2px solid #f44336";
+    baseStyle.borderBottom = "2px solid #f44336";
+    baseStyle.borderLeft = "2px solid #f44336";
   }
   // Highlight affected units in yellow (lower priority)
   else if (isInAffectedUnit) {
     baseStyle.backgroundColor = isInput ? "#fffde7" : "#fff9c4";
-    baseStyle.border = "1px solid #fbc02d";
+    baseStyle.borderTop = "1px solid #fbc02d";
+    baseStyle.borderRight = "1px solid #fbc02d";
+    baseStyle.borderBottom = "1px solid #fbc02d";
+    baseStyle.borderLeft = "1px solid #fbc02d";
   }
 
-  // Thick borders for 3x3 box separation
-  if (colIdx % 3 === 0 && colIdx !== 0) baseStyle.borderLeft = "3px solid #333";
-  if (rowIdx % 3 === 0 && rowIdx !== 0) baseStyle.borderTop = "3px solid #333";
+  // Thick borders for 3x3 box separation (MUST come after highlighting to override)
+  if (colIdx % 3 === 0 && colIdx !== 0) {
+    baseStyle.borderLeft = "3px solid #333";
+  }
+  if (rowIdx % 3 === 0 && rowIdx !== 0) {
+    baseStyle.borderTop = "3px solid #333";
+  }
 
-  // Outer borders
-  if (colIdx === 0) baseStyle.borderLeft = "3px solid #333";
-  if (rowIdx === 0) baseStyle.borderTop = "3px solid #333";
-  if (colIdx === 8) baseStyle.borderRight = "3px solid #333";
-  if (rowIdx === 8) baseStyle.borderBottom = "3px solid #333";
+  // Outer borders (MUST come after highlighting to override)
+  if (colIdx === 0) {
+    baseStyle.borderLeft = "3px solid #333";
+  }
+  if (rowIdx === 0) {
+    baseStyle.borderTop = "3px solid #333";
+  }
+  if (colIdx === 8) {
+    baseStyle.borderRight = "3px solid #333";
+  }
+  if (rowIdx === 8) {
+    baseStyle.borderBottom = "3px solid #333";
+  }
 
   return baseStyle;
 }
@@ -163,13 +188,13 @@ export default function Page() {
       setResult(response.data);
     } catch (error) {
       const errorData = error.response?.data?.detail;
-      if (errorData && typeof errorData === 'object') {
+      if (errorData && typeof errorData === "object") {
         // Structured error from backend
         setResult({
           error: true,
           error_type: errorData.error_type,
           message: errorData.message,
-          suggestions: errorData.suggestions || []
+          suggestions: errorData.suggestions || [],
         });
       } else {
         // Fallback for other errors
@@ -177,7 +202,7 @@ export default function Page() {
           error: true,
           error_type: "UNKNOWN_ERROR",
           message: error.response?.data?.detail || error.message,
-          suggestions: ["Please try again or check your network connection"]
+          suggestions: ["Please try again or check your network connection"],
         });
       }
     }
@@ -245,12 +270,14 @@ export default function Page() {
               row.map((value, cIdx) => {
                 const cellKey = `${rIdx}-${cIdx}`;
                 const isDuplicate = highlightInfo.duplicates.has(cellKey);
-                const boxKey = `${Math.floor(rIdx / 3)}-${Math.floor(cIdx / 3)}`;
-                const isInAffectedUnit = 
+                const boxKey = `${Math.floor(rIdx / 3)}-${Math.floor(
+                  cIdx / 3
+                )}`;
+                const isInAffectedUnit =
                   highlightInfo.affectedRows.has(rIdx) ||
                   highlightInfo.affectedCols.has(cIdx) ||
                   highlightInfo.affectedBoxes.has(boxKey);
-                
+
                 return (
                   <input
                     key={cellKey}
@@ -259,7 +286,13 @@ export default function Page() {
                     value={value === 0 ? "" : value}
                     onChange={(e) => handleChange(rIdx, cIdx, e.target.value)}
                     style={{
-                      ...getSudokuCellStyle(rIdx, cIdx, true, isDuplicate, isInAffectedUnit),
+                      ...getSudokuCellStyle(
+                        rIdx,
+                        cIdx,
+                        true,
+                        isDuplicate,
+                        isInAffectedUnit
+                      ),
                       outline: "none",
                       transition: "background-color 0.2s",
                     }}
@@ -293,10 +326,11 @@ export default function Page() {
             }}
           >
             <span style={{ color: "#d32f2f", fontWeight: "bold" }}>
-              ⚠️ Duplicate numbers detected! 
+              ⚠️ Duplicate numbers detected!
             </span>
             <span style={{ color: "#666", marginLeft: "0.5rem" }}>
-              Red cells have duplicates, yellow areas show affected rows/columns/boxes.
+              Red cells have duplicates, yellow areas show affected
+              rows/columns/boxes.
             </span>
           </div>
         )}
@@ -382,7 +416,10 @@ export default function Page() {
                     marginBottom: "1rem",
                   }}
                 >
-                  ❌ {result.error_type === "NO_SOLUTION" ? "Not Solvable" : "Invalid Puzzle"}
+                  ❌{" "}
+                  {result.error_type === "NO_SOLUTION"
+                    ? "Not Solvable"
+                    : "Invalid Puzzle"}
                 </h2>
                 <p
                   style={{
@@ -432,7 +469,9 @@ export default function Page() {
                     marginBottom: "1rem",
                   }}
                 >
-                  {result.is_solved ? "✅ Solution Found!" : "⚠️ Partial Solution"}
+                  {result.is_solved
+                    ? "✅ Solution Found!"
+                    : "⚠️ Partial Solution"}
                 </h2>
                 <p
                   style={{
