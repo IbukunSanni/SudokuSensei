@@ -21,6 +21,11 @@ class SudokuBoard:
         ]
 
     def update_candidates(self):
+        """
+        Update candidates for all cells based on current board state.
+        Returns a list of changes made to candidates for tracking purposes.
+        """
+        changes = []
         for r in range(9):
             for c in range(9):
                 cell = self.grid[r][c]
@@ -37,9 +42,21 @@ class SudokuBoard:
                 cell.set_candidates(cell.get_candidates() - used_values)
 
                 if old_candidates != cell.get_candidates():
+                    eliminated = old_candidates - cell.get_candidates()
+                    changes.append(
+                        {
+                            "position": (r, c),
+                            "location": get_cell_location(r, c),
+                            "old_candidates": old_candidates,
+                            "new_candidates": cell.get_candidates().copy(),
+                            "eliminated": eliminated,
+                        }
+                    )
+                    # TODO: remove this print statement
                     print(
                         f"Updated candidates at {get_cell_location(r, c)}: {old_candidates} → {cell.get_candidates()}"
                     )
+        return changes
 
     def display_simple(self):
         for i, row in enumerate(self.grid):
@@ -107,7 +124,17 @@ class SudokuBoard:
         for sub_row in sub_rows:
             print(sub_row)
 
+    def get_candidates_grid(self):
+        """
+        Returns a 9x9 grid of candidate sets for each cell.
+        This is useful for tracking the state of candidates at each step.
+        """
+        return [[cell.get_candidates().copy() for cell in row] for row in self.grid]
+
     def is_solved(self):
+        """
+        Check if the board is completely solved and valid.
+        """
         for r in range(9):
             for c in range(9):
                 cell = self.grid[r][c]

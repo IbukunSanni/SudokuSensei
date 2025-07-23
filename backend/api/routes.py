@@ -32,17 +32,41 @@ class PuzzleInput(BaseModel):
     )
 
 
+class CandidateChange(BaseModel):
+    """Model for a change in candidates for a cell"""
+
+    position: Tuple[int, int] = Field(
+        ..., description="Row and column indices of the cell"
+    )
+    location: str = Field(..., description="Human-readable location (e.g., 'R1C2')")
+    eliminated: List[int] = Field(..., description="Candidates that were eliminated")
+    old_candidates: List[int] = Field(..., description="Candidates before the change")
+    new_candidates: List[int] = Field(..., description="Candidates after the change")
+
+
 class SolvingStep(BaseModel):
     """Model for a single step in the solving process"""
 
     grid: List[List[int]] = Field(
         ..., description="The state of the grid after this step"
     )
+    candidates: Optional[List[List[List[int]]]] = Field(
+        None, description="The state of candidates for each cell after this step"
+    )
     technique: str = Field(..., description="The technique applied in this step")
     description: str = Field(
         ..., description="Detailed description of what happened in this step"
     )
     cells_solved: int = Field(..., description="Number of cells solved in this step")
+    candidates_eliminated: Optional[int] = Field(
+        0, description="Number of candidates eliminated in this step"
+    )
+    candidate_changes: Optional[List[CandidateChange]] = Field(
+        None, description="Details of candidate changes in this step"
+    )
+    solved_positions: Optional[List[str]] = Field(
+        None, description="Positions of cells that were solved in this step"
+    )
 
 
 class SolveResponse(BaseModel):
