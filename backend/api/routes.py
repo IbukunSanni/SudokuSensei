@@ -32,6 +32,19 @@ class PuzzleInput(BaseModel):
     )
 
 
+class SolvingStep(BaseModel):
+    """Model for a single step in the solving process"""
+
+    grid: List[List[int]] = Field(
+        ..., description="The state of the grid after this step"
+    )
+    technique: str = Field(..., description="The technique applied in this step")
+    description: str = Field(
+        ..., description="Detailed description of what happened in this step"
+    )
+    cells_solved: int = Field(..., description="Number of cells solved in this step")
+
+
 class SolveResponse(BaseModel):
     """Response model for solved puzzle"""
 
@@ -39,7 +52,11 @@ class SolveResponse(BaseModel):
     is_solved: bool = Field(..., description="Whether the puzzle was completely solved")
     message: str = Field(..., description="Status message about the solving process")
     techniques_applied: Optional[List[str]] = Field(
-        default=None, description="List of techniques applied"
+        default=None, description="List of techniques that were successfully applied"
+    )
+    solving_steps: Optional[List[SolvingStep]] = Field(
+        default=None,
+        description="Complete step-by-step solving process with grid states and detailed descriptions",
     )
 
 
@@ -162,5 +179,6 @@ def solve_sudoku(data: PuzzleInput):
         solved_grid=result["solved_grid"],
         is_solved=result["is_solved"],
         message=result["message"],
-        techniques_applied=result.get("techniques_applied"),
+        techniques_applied=result.get("techniques_applied", []),
+        solving_steps=result.get("solving_steps", []),
     )
