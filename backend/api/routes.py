@@ -9,7 +9,7 @@ from typing import List, Dict, Any, Optional, Tuple
 
 # Import services
 from services.solver_service import SudokuSolver
-from services.enhanced_solver import enhanced_solver
+from services.frontend_solver import frontend_solver
 from services.validation_service import (
     is_valid_format,
     is_solvable,
@@ -197,8 +197,8 @@ def solve_sudoku(data: PuzzleInput):
             ),
         )
 
-    # Use the enhanced solver service for detailed step-by-step solving
-    result = enhanced_solver.solve(data.puzzle)
+    # Use the frontend solver service for detailed step-by-step solving
+    result = frontend_solver.solve(data.puzzle)
 
     return SolveResponse(
         solved_grid=result["solved_grid"],
