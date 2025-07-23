@@ -259,57 +259,127 @@ export default function Page() {
         >
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(9, 3rem)",
-              gap: "0",
-              border: "3px solid #333",
-              backgroundColor: "#333",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
-            {puzzle.map((row, rIdx) =>
-              row.map((value, cIdx) => {
-                const cellKey = `${rIdx}-${cIdx}`;
-                const isDuplicate = highlightInfo.duplicates.has(cellKey);
-                const boxKey = `${Math.floor(rIdx / 3)}-${Math.floor(
-                  cIdx / 3
-                )}`;
-                const isInAffectedUnit =
-                  highlightInfo.affectedRows.has(rIdx) ||
-                  highlightInfo.affectedCols.has(cIdx) ||
-                  highlightInfo.affectedBoxes.has(boxKey);
+            {/* Column headers (A-I) */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "3rem repeat(9, 3rem)",
+                gap: "0",
+                marginBottom: "0.25rem",
+              }}
+            >
+              <div></div> {/* Empty corner */}
+              {["A", "B", "C", "D", "E", "F", "G", "H", "I"].map((letter) => (
+                <div
+                  key={letter}
+                  style={{
+                    width: "3rem",
+                    height: "1.5rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.9rem",
+                    fontWeight: "bold",
+                    color: "#666",
+                  }}
+                >
+                  {letter}
+                </div>
+              ))}
+            </div>
 
-                return (
-                  <input
-                    key={cellKey}
-                    type="text"
-                    maxLength={1}
-                    value={value === 0 ? "" : value}
-                    onChange={(e) => handleChange(rIdx, cIdx, e.target.value)}
+            {/* Grid with row numbers */}
+            <div style={{ display: "flex" }}>
+              {/* Row numbers (1-9) */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  marginRight: "0.25rem",
+                }}
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
+                  <div
+                    key={number}
                     style={{
-                      ...getSudokuCellStyle(
-                        rIdx,
-                        cIdx,
-                        true,
-                        isDuplicate,
-                        isInAffectedUnit
-                      ),
-                      outline: "none",
-                      transition: "background-color 0.2s",
+                      width: "1.5rem",
+                      height: "3rem",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "0.9rem",
+                      fontWeight: "bold",
+                      color: "#666",
                     }}
-                    onFocus={(e) => {
-                      if (!isDuplicate && !isInAffectedUnit) {
-                        e.target.style.backgroundColor = "#e3f2fd";
-                      }
-                    }}
-                    onBlur={(e) => {
-                      if (!isDuplicate && !isInAffectedUnit) {
-                        e.target.style.backgroundColor = "white";
-                      }
-                    }}
-                  />
-                );
-              })
-            )}
+                  >
+                    {number}
+                  </div>
+                ))}
+              </div>
+
+              {/* Sudoku grid */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(9, 3rem)",
+                  gap: "0",
+                  border: "3px solid #333",
+                  backgroundColor: "#333",
+                }}
+              >
+                {puzzle.map((row, rIdx) =>
+                  row.map((value, cIdx) => {
+                    const cellKey = `${rIdx}-${cIdx}`;
+                    const isDuplicate = highlightInfo.duplicates.has(cellKey);
+                    const boxKey = `${Math.floor(rIdx / 3)}-${Math.floor(
+                      cIdx / 3
+                    )}`;
+                    const isInAffectedUnit =
+                      highlightInfo.affectedRows.has(rIdx) ||
+                      highlightInfo.affectedCols.has(cIdx) ||
+                      highlightInfo.affectedBoxes.has(boxKey);
+
+                    return (
+                      <input
+                        key={cellKey}
+                        type="text"
+                        maxLength={1}
+                        value={value === 0 ? "" : value}
+                        onChange={(e) =>
+                          handleChange(rIdx, cIdx, e.target.value)
+                        }
+                        style={{
+                          ...getSudokuCellStyle(
+                            rIdx,
+                            cIdx,
+                            true,
+                            isDuplicate,
+                            isInAffectedUnit
+                          ),
+                          outline: "none",
+                          transition: "background-color 0.2s",
+                        }}
+                        onFocus={(e) => {
+                          if (!isDuplicate && !isInAffectedUnit) {
+                            e.target.style.backgroundColor = "#e3f2fd";
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (!isDuplicate && !isInAffectedUnit) {
+                            e.target.style.backgroundColor = "white";
+                          }
+                        }}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
