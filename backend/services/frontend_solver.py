@@ -13,6 +13,7 @@ from logic.hidden_single import apply_all_hidden_singles
 from logic.hidden_pairs import apply_all_hidden_pairs
 from logic.naked_pairs import apply_all_naked_pairs
 from helpers.get_location import get_cell_location
+from config.settings import settings
 
 
 class FrontendSudokuSolver:
@@ -20,10 +21,13 @@ class FrontendSudokuSolver:
     Solver optimized for frontend display with clear step separation.
     """
 
-    MAX_ITERATIONS = 100
-
-    def __init__(self):
-        """Initialize the solver with available techniques."""
+    def __init__(self, max_iterations=None):
+        """Initialize the solver with available techniques and max_iterations."""
+        self.MAX_ITERATIONS = (
+            max_iterations
+            if max_iterations is not None
+            else settings.SUDOKU_MAX_ITERATIONS
+        )
         self.techniques = [
             ("Naked Singles", apply_all_naked_singles),
             ("Hidden Singles", apply_all_hidden_singles),

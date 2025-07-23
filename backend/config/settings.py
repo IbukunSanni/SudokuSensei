@@ -32,6 +32,9 @@ class Settings:
     # Logging Configuration
     LOG_LEVEL: str = "INFO"
 
+    # Sudoku Solver Configuration
+    SUDOKU_MAX_ITERATIONS: int = 100  # Default max iterations for all solvers
+
 
 # Global settings instance
 settings = Settings()
