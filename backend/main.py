@@ -51,6 +51,60 @@ def is_valid_puzzle(puzzle: List[List[int]]) -> bool:
     return True
 
 
+def has_unique_solution(puzzle: List[List[int]]) -> bool:
+    """
+    Check if the puzzle has exactly one unique solution.
+    Returns True if unique, False if multiple solutions exist.
+    """
+
+    def get_candidates(board, row, col):
+        used = set()
+        # Check row
+        used.update(board[row])
+        # Check column
+        used.update(board[r][col] for r in range(9))
+        # Check 3x3 box
+        start_row = (row // 3) * 3
+        start_col = (col // 3) * 3
+        for r in range(start_row, start_row + 3):
+            for c in range(start_col, start_col + 3):
+                used.add(board[r][c])
+        return [n for n in range(1, 10) if n not in used]
+
+    def find_empty_cell(board):
+        for r in range(9):
+            for c in range(9):
+                if board[r][c] == 0:
+                    return (r, c)
+        return None
+
+    def count_solutions(board, max_solutions=2):
+        """Count solutions up to max_solutions (for efficiency)"""
+        cell = find_empty_cell(board)
+        if not cell:
+            return 1  # Found a complete solution
+
+        row, col = cell
+        solution_count = 0
+
+        for num in get_candidates(board, row, col):
+            board[row][col] = num
+            solution_count += count_solutions(board, max_solutions)
+            board[row][col] = 0  # backtrack
+
+            # Early exit if we find more than one solution
+            if solution_count >= max_solutions:
+                return solution_count
+
+        return solution_count
+
+    # Create a copy to avoid modifying the original
+    board_copy = [row[:] for row in puzzle]
+    solution_count = count_solutions(board_copy, max_solutions=2)
+
+    return solution_count == 1
+
+
 @app.get("/")
 def health_check():
     return {"status": "SudokuSensei backend is running!", "version": "1.0"}
@@ -96,6 +150,23 @@ def solve_sudoku(data: PuzzleInput):
                     "Check for duplicate numbers in rows, columns, or 3x3 boxes",
                     "Verify that the puzzle follows standard Sudoku rules",
                     "Try loading the example puzzle to test the solver",
+                ],
+            },
+        )
+
+    # Check if puzzle has a unique solution (important for educational purposes)
+    if not has_unique_solution(data.puzzle):
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": "Multiple solutions found",
+                "error_type": "MULTIPLE_SOLUTIONS",
+                "message": "This puzzle has multiple possible solutions",
+                "suggestions": [
+                    "A valid Sudoku puzzle should have exactly one unique solution",
+                    "Add more clues to constrain the puzzle to a single solution",
+                    "Verify that all given numbers are correct",
+                    "Try loading the example puzzle which has a unique solution",
                 ],
             },
         )
