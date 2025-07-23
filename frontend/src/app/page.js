@@ -20,26 +20,29 @@ const defaultPuzzle = [
   [0, 0, 0, 0, 8, 0, 0, 7, 9],
 ];
 
-// Helper to generate consistent cell borders for both grids
-function getCellBorderStyle(rowIdx, colIdx) {
-  return {
-    borderLeft:
-      colIdx % 3 === 0 && colIdx !== 0
-        ? "2px solid black"
-        : "1px solid gray",
-    borderRight:
-      (colIdx + 1) % 3 === 0 && colIdx !== 8
-        ? "2px solid black"
-        : "1px solid gray",
-    borderBottom:
-      (rowIdx + 1) % 3 === 0 && rowIdx !== 8
-        ? "2px solid black"
-        : "1px solid gray",
-    borderTop:
-      rowIdx % 3 === 0 && rowIdx !== 0 
-        ? "2px solid black"
-        : "1px solid gray",
+// Helper to generate proper Sudoku board styling
+function getSudokuCellStyle(rowIdx, colIdx, isInput = true) {
+  const baseStyle = {
+    width: "3rem",
+    height: "3rem",
+    textAlign: "center",
+    fontSize: "1.2rem",
+    fontWeight: "bold",
+    border: "1px solid #ccc",
+    backgroundColor: isInput ? "white" : "#f8f9fa",
   };
+
+  // Thick borders for 3x3 box separation
+  if (colIdx % 3 === 0 && colIdx !== 0) baseStyle.borderLeft = "3px solid #333";
+  if (rowIdx % 3 === 0 && rowIdx !== 0) baseStyle.borderTop = "3px solid #333";
+
+  // Outer borders
+  if (colIdx === 0) baseStyle.borderLeft = "3px solid #333";
+  if (rowIdx === 0) baseStyle.borderTop = "3px solid #333";
+  if (colIdx === 8) baseStyle.borderRight = "3px solid #333";
+  if (rowIdx === 8) baseStyle.borderBottom = "3px solid #333";
+
+  return baseStyle;
 }
 
 export default function Page() {
@@ -82,87 +85,203 @@ export default function Page() {
   };
 
   return (
-    <div style={{ padding: "1rem" }}>
-      <h1>Editable Sudoku Grid</h1>
-
-      {/* Editable Sudoku input grid */}
+    <div
+      style={{
+        padding: "2rem",
+        fontFamily: "Arial, sans-serif",
+        backgroundColor: "#f5f5f5",
+        minHeight: "100vh",
+      }}
+    >
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(9, 2.5rem)",
-          gap: "4px",
-          marginBottom: "1rem",
+          maxWidth: "600px",
+          margin: "0 auto",
+          backgroundColor: "white",
+          padding: "2rem",
+          borderRadius: "10px",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
         }}
       >
-        {puzzle.map((row, rIdx) =>
-          row.map((value, cIdx) => (
-            <input
-              key={`${rIdx}-${cIdx}`}
-              type="text"
-              maxLength={1}
-              value={value === 0 ? "" : value}
-              onChange={(e) => handleChange(rIdx, cIdx, e.target.value)}
-              style={{
-                width: "2.5rem",
-                height: "2.5rem",
-                textAlign: "center",
-                fontSize: "1.5rem",
-                ...getCellBorderStyle(rIdx, cIdx),
-              }}
-            />
-          ))
-        )}
-      </div>
+        <h1
+          style={{
+            textAlign: "center",
+            color: "#333",
+            marginBottom: "2rem",
+            fontSize: "2.5rem",
+          }}
+        >
+          SudokuSensei
+        </h1>
 
-      {/* Buttons */}
-      <button onClick={loadDefaultPuzzle} style={{ marginRight: "1rem" }}>
-        Load Default Puzzle
-      </button>
-
-      <button onClick={clearPuzzle} style={{ marginRight: "1rem" }}>
-        Clear
-      </button>
-
-      <button onClick={solvePuzzle} disabled={loading}>
-        {loading ? "Solving..." : "Solve Puzzle"}
-      </button>
-
-      {/* Solution display grid */}
-      {result && result.is_solved && (
-        <>
-          <h2 style={{ marginTop: "1rem" }}>Solution:</h2>
+        {/* Editable Sudoku input grid */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "2rem",
+          }}
+        >
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(9, 2.5rem)",
-              gap: "4px",
-              marginTop: "0.5rem",
+              gridTemplateColumns: "repeat(9, 3rem)",
+              gap: "0",
+              border: "3px solid #333",
+              backgroundColor: "#333",
             }}
           >
-            {result.solved_grid.flat().map((num, idx) => {
-              const r = Math.floor(idx / 9);
-              const c = idx % 9;
-              return (
-                <div
-                  key={idx}
+            {puzzle.map((row, rIdx) =>
+              row.map((value, cIdx) => (
+                <input
+                  key={`${rIdx}-${cIdx}`}
+                  type="text"
+                  maxLength={1}
+                  value={value === 0 ? "" : value}
+                  onChange={(e) => handleChange(rIdx, cIdx, e.target.value)}
                   style={{
-                    width: "2.5rem",
-                    height: "2.5rem",
-                    textAlign: "center",
-                    lineHeight: "2.5rem",
-                    fontSize: "1.5rem",
-                    userSelect: "none",
-                    backgroundColor: "#e0f7fa",
-                    ...getCellBorderStyle(r, c),
+                    ...getSudokuCellStyle(rIdx, cIdx, true),
+                    outline: "none",
+                    transition: "background-color 0.2s",
                   }}
-                >
-                  {num}
-                </div>
-              );
-            })}
+                  onFocus={(e) => (e.target.style.backgroundColor = "#e3f2fd")}
+                  onBlur={(e) => (e.target.style.backgroundColor = "white")}
+                />
+              ))
+            )}
           </div>
-        </>
-      )}
+        </div>
+
+        {/* Buttons */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "1rem",
+            marginBottom: "2rem",
+          }}
+        >
+          <button
+            onClick={loadDefaultPuzzle}
+            style={{
+              padding: "0.75rem 1.5rem",
+              fontSize: "1rem",
+              backgroundColor: "#4CAF50",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+              transition: "background-color 0.2s",
+            }}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#45a049")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#4CAF50")}
+          >
+            Load Example
+          </button>
+
+          <button
+            onClick={clearPuzzle}
+            style={{
+              padding: "0.75rem 1.5rem",
+              fontSize: "1rem",
+              backgroundColor: "#f44336",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+              transition: "background-color 0.2s",
+            }}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#da190b")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#f44336")}
+          >
+            Clear
+          </button>
+
+          <button
+            onClick={solvePuzzle}
+            disabled={loading}
+            style={{
+              padding: "0.75rem 1.5rem",
+              fontSize: "1rem",
+              backgroundColor: loading ? "#ccc" : "#2196F3",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: loading ? "not-allowed" : "pointer",
+              transition: "background-color 0.2s",
+            }}
+            onMouseOver={(e) =>
+              !loading && (e.target.style.backgroundColor = "#1976D2")
+            }
+            onMouseOut={(e) =>
+              !loading && (e.target.style.backgroundColor = "#2196F3")
+            }
+          >
+            {loading ? "Solving..." : "Solve Puzzle"}
+          </button>
+        </div>
+
+        {/* Solution display grid */}
+        {result && (
+          <div style={{ textAlign: "center" }}>
+            <h2
+              style={{
+                color: result.is_solved ? "#4CAF50" : "#ff9800",
+                marginBottom: "1rem",
+              }}
+            >
+              {result.is_solved ? "✅ Solution Found!" : "⚠️ Partial Solution"}
+            </h2>
+            <p
+              style={{
+                color: "#666",
+                marginBottom: "1.5rem",
+                fontStyle: "italic",
+              }}
+            >
+              {result.message}
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(9, 3rem)",
+                  gap: "0",
+                  border: "3px solid #333",
+                  backgroundColor: "#333",
+                }}
+              >
+                {result.solved_grid.flat().map((num, idx) => {
+                  const r = Math.floor(idx / 9);
+                  const c = idx % 9;
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        ...getSudokuCellStyle(r, c, false),
+                        lineHeight: "3rem",
+                        userSelect: "none",
+                        backgroundColor: result.is_solved
+                          ? "#e8f5e8"
+                          : "#fff3e0",
+                        color: num === 0 ? "#ccc" : "#333",
+                      }}
+                    >
+                      {num === 0 ? "?" : num}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
