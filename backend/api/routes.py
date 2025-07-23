@@ -9,6 +9,7 @@ from typing import List, Dict, Any, Optional, Tuple
 
 # Import services
 from services.solver_service import SudokuSolver
+from services.enhanced_solver import enhanced_solver
 from services.validation_service import (
     is_valid_format,
     is_solvable,
@@ -19,7 +20,7 @@ from services.validation_service import (
 router = APIRouter()
 
 # Initialize services
-solver = SudokuSolver()
+solver = SudokuSolver()  # Keep for backward compatibility if needed
 
 
 # Data models
@@ -196,8 +197,8 @@ def solve_sudoku(data: PuzzleInput):
             ),
         )
 
-    # Use the solver service
-    result = solver.solve(data.puzzle)
+    # Use the enhanced solver service for detailed step-by-step solving
+    result = enhanced_solver.solve(data.puzzle)
 
     return SolveResponse(
         solved_grid=result["solved_grid"],
