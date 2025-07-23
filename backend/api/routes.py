@@ -1,5 +1,6 @@
 """
-API routes for SudokuSensei
+API routes for SudokuSensei backend application.
+Provides endpoints for solving Sudoku puzzles and health checks.
 """
 
 from fastapi import APIRouter, HTTPException
@@ -51,6 +52,26 @@ class ErrorResponse(BaseModel):
     suggestions: List[str] = []
 
 
+def format_error(error_type: str, message: str, suggestions: List[str]) -> dict:
+    """
+    Create a properly formatted error response using the ErrorResponse model.
+
+    Args:
+        error_type: Type identifier for the error (e.g., "INVALID_FORMAT")
+        message: Detailed error message explaining the issue
+        suggestions: List of suggestions to help the user fix the error
+
+    Returns:
+        Dictionary representation of the ErrorResponse model ready for HTTP response
+    """
+    return ErrorResponse(
+        error=error_type.replace("_", " ").title(),
+        error_type=error_type,
+        message=message,
+        suggestions=suggestions,
+    ).dict()
+
+
 # API endpoints
 @router.get("/")
 def health_check():
@@ -75,62 +96,63 @@ def solve_sudoku(data: PuzzleInput):
     """
     Solve a Sudoku puzzle using advanced logical techniques.
 
+    This endpoint validates the input puzzle format, checks if it's solvable and has a unique solution,
+    then attempts to solve it using various Sudoku solving techniques.
+
     Args:
-        data: Puzzle input containing 9x9 grid
+        data: Puzzle input containing 9x9 grid where 0 represents empty cells
 
     Returns:
-        Solved puzzle with metadata
+        Solved puzzle with metadata including techniques used
 
     Raises:
-        HTTPException: If puzzle is invalid or unsolvable
+        HTTPException(400): If puzzle format is invalid
+        HTTPException(422): If puzzle is unsolvable or has multiple solutions
     """
     # Validate puzzle format
     if not is_valid_format(data.puzzle):
         raise HTTPException(
             status_code=400,
-            detail={
-                "error": "Invalid puzzle format",
-                "error_type": "INVALID_FORMAT",
-                "message": "Puzzle must be a 9x9 grid with numbers 0-9",
-                "suggestions": [
+            detail=format_error(
+                "INVALID_FORMAT",
+                "Puzzle must be a 9x9 grid with numbers 0-9",
+                [
                     "Ensure your puzzle is exactly 9 rows and 9 columns",
                     "Use 0 for empty cells and numbers 1-9 for filled cells",
                     "Check that all values are integers between 0 and 9",
                 ],
-            },
+            ),
         )
 
     # Check if puzzle is solvable
     if not is_solvable(data.puzzle):
         raise HTTPException(
             status_code=422,
-            detail={
-                "error": "Unsolvable puzzle",
-                "error_type": "NO_SOLUTION",
-                "message": "This puzzle is not solvable - it violates Sudoku rules",
-                "suggestions": [
+            detail=format_error(
+                "NO_SOLUTION",
+                "This puzzle is not solvable - it violates Sudoku rules",
+                [
                     "Check for duplicate numbers in rows, columns, or 3x3 boxes",
                     "Verify that the puzzle follows standard Sudoku rules",
                     "Try loading the example puzzle to test the solver",
                 ],
-            },
+            ),
         )
 
     # Check if puzzle has a unique solution
     if not has_unique_solution(data.puzzle):
         raise HTTPException(
             status_code=422,
-            detail={
-                "error": "Multiple solutions found",
-                "error_type": "MULTIPLE_SOLUTIONS",
-                "message": "This puzzle has multiple possible solutions",
-                "suggestions": [
+            detail=format_error(
+                "MULTIPLE_SOLUTIONS",
+                "This puzzle has multiple possible solutions",
+                [
                     "A valid Sudoku puzzle should have exactly one unique solution",
                     "Add more clues to constrain the puzzle to a single solution",
                     "Verify that all given numbers are correct",
                     "Try loading the example puzzle which has a unique solution",
                 ],
-            },
+            ),
         )
 
     # Use the solver service
