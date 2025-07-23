@@ -7,6 +7,7 @@ from logic.naked_single import apply_all_naked_singles
 from logic.hidden_single import apply_all_hidden_singles
 from logic.hidden_pairs import apply_all_hidden_pairs
 from logic.naked_pairs import apply_all_naked_pairs  # <-- Import naked pairs here
+from helpers.check_solvable import check_solvable
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -28,6 +29,13 @@ app.add_middleware(
 
 class PuzzleInput(BaseModel):
     puzzle: List[List[int]]  # 9x9 grid
+
+
+class ErrorResponse(BaseModel):
+    error: str
+    error_type: str
+    message: str
+    suggestions: List[str] = []
 
 
 def is_valid_puzzle(puzzle: List[List[int]]) -> bool:
@@ -62,7 +70,35 @@ def detailed_health():
 @app.post("/solve")
 def solve_sudoku(data: PuzzleInput):
     if not is_valid_puzzle(data.puzzle):
-        raise HTTPException(status_code=400, detail="Puzzle is invalid")
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "Invalid puzzle format",
+                "error_type": "INVALID_FORMAT",
+                "message": "Puzzle must be a 9x9 grid with numbers 0-9",
+                "suggestions": [
+                    "Ensure your puzzle is exactly 9 rows and 9 columns",
+                    "Use 0 for empty cells and numbers 1-9 for filled cells",
+                    "Check that all values are integers between 0 and 9",
+                ],
+            },
+        )
+
+    # Check if puzzle is solvable before attempting logical techniques
+    if not check_solvable(data.puzzle):
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": "Unsolvable puzzle",
+                "error_type": "NO_SOLUTION",
+                "message": "This puzzle is not solvable - it violates Sudoku rules",
+                "suggestions": [
+                    "Check for duplicate numbers in rows, columns, or 3x3 boxes",
+                    "Verify that the puzzle follows standard Sudoku rules",
+                    "Try loading the example puzzle to test the solver",
+                ],
+            },
+        )
 
     board = SudokuBoard(data.puzzle)
 

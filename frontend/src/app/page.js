@@ -20,6 +20,8 @@ const defaultPuzzle = [
   [0, 0, 0, 0, 8, 0, 0, 7, 9],
 ];
 
+
+
 // Helper to generate proper Sudoku board styling
 function getSudokuCellStyle(rowIdx, colIdx, isInput = true) {
   const baseStyle = {
@@ -69,7 +71,24 @@ export default function Page() {
       const response = await axios.post(`${BACKEND_URL}/solve`, { puzzle });
       setResult(response.data);
     } catch (error) {
-      alert(error.response?.data?.detail || error.message);
+      const errorData = error.response?.data?.detail;
+      if (errorData && typeof errorData === 'object') {
+        // Structured error from backend
+        setResult({
+          error: true,
+          error_type: errorData.error_type,
+          message: errorData.message,
+          suggestions: errorData.suggestions || []
+        });
+      } else {
+        // Fallback for other errors
+        setResult({
+          error: true,
+          error_type: "UNKNOWN_ERROR",
+          message: error.response?.data?.detail || error.message,
+          suggestions: ["Please try again or check your network connection"]
+        });
+      }
     }
     setLoading(false);
   };
@@ -221,64 +240,119 @@ export default function Page() {
           </button>
         </div>
 
-        {/* Solution display grid */}
+        {/* Results display */}
         {result && (
           <div style={{ textAlign: "center" }}>
-            <h2
-              style={{
-                color: result.is_solved ? "#4CAF50" : "#ff9800",
-                marginBottom: "1rem",
-              }}
-            >
-              {result.is_solved ? "✅ Solution Found!" : "⚠️ Partial Solution"}
-            </h2>
-            <p
-              style={{
-                color: "#666",
-                marginBottom: "1.5rem",
-                fontStyle: "italic",
-              }}
-            >
-              {result.message}
-            </p>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-              }}
-            >
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(9, 3rem)",
-                  gap: "0",
-                  border: "3px solid #333",
-                  backgroundColor: "#333",
-                }}
-              >
-                {result.solved_grid.flat().map((num, idx) => {
-                  const r = Math.floor(idx / 9);
-                  const c = idx % 9;
-                  return (
-                    <div
-                      key={idx}
+            {result.error ? (
+              // Error display
+              <div>
+                <h2
+                  style={{
+                    color: "#f44336",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  ❌ {result.error_type === "NO_SOLUTION" ? "Not Solvable" : "Invalid Puzzle"}
+                </h2>
+                <p
+                  style={{
+                    color: "#666",
+                    marginBottom: "1rem",
+                    fontSize: "1.1rem",
+                  }}
+                >
+                  {result.message}
+                </p>
+                {result.suggestions && result.suggestions.length > 0 && (
+                  <div
+                    style={{
+                      backgroundColor: "#fff3cd",
+                      border: "1px solid #ffeaa7",
+                      borderRadius: "5px",
+                      padding: "1rem",
+                      margin: "1rem 0",
+                      textAlign: "left",
+                    }}
+                  >
+                    <h4 style={{ color: "#856404", marginBottom: "0.5rem" }}>
+                      💡 Suggestions:
+                    </h4>
+                    <ul
                       style={{
-                        ...getSudokuCellStyle(r, c, false),
-                        lineHeight: "3rem",
-                        userSelect: "none",
-                        backgroundColor: result.is_solved
-                          ? "#e8f5e8"
-                          : "#fff3e0",
-                        color: num === 0 ? "#ccc" : "#333",
+                        color: "#856404",
+                        margin: 0,
+                        paddingLeft: "1.5rem",
                       }}
                     >
-                      {num === 0 ? "?" : num}
-                    </div>
-                  );
-                })}
+                      {result.suggestions.map((suggestion, idx) => (
+                        <li key={idx} style={{ marginBottom: "0.25rem" }}>
+                          {suggestion}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-            </div>
+            ) : (
+              // Success display
+              <div>
+                <h2
+                  style={{
+                    color: result.is_solved ? "#4CAF50" : "#ff9800",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  {result.is_solved ? "✅ Solution Found!" : "⚠️ Partial Solution"}
+                </h2>
+                <p
+                  style={{
+                    color: "#666",
+                    marginBottom: "1.5rem",
+                    fontStyle: "italic",
+                  }}
+                >
+                  {result.message}
+                </p>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(9, 3rem)",
+                      gap: "0",
+                      border: "3px solid #333",
+                      backgroundColor: "#333",
+                    }}
+                  >
+                    {result.solved_grid.flat().map((num, idx) => {
+                      const r = Math.floor(idx / 9);
+                      const c = idx % 9;
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            ...getSudokuCellStyle(r, c, false),
+                            lineHeight: "3rem",
+                            userSelect: "none",
+                            backgroundColor: result.is_solved
+                              ? "#e8f5e8"
+                              : "#fff3e0",
+                            color: num === 0 ? "#ccc" : "#333",
+                          }}
+                        >
+                          {num === 0 ? "?" : num}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
