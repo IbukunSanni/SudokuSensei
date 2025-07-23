@@ -88,4 +88,4 @@ An educational Sudoku solver that highlights rule violations and provides step-b
 
 - **Backend**: Python, FastAPI, Uvicorn
 - **Frontend**: React, Next.js
-- **Styling**: CSS-in-JS with inline styles (no external CSS frameworks)
+- **Styling**: Pure inline styles for all components
