@@ -5,7 +5,7 @@ Provides endpoints for solving Sudoku puzzles and health checks.
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 # Import services
 from services.solver_service import SudokuSolver

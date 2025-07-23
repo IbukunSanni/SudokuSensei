@@ -52,7 +52,7 @@ class SudokuBoard:
                             "eliminated": eliminated,
                         }
                     )
-                    # TODO: remove this print statement
+                    # Debug output showing candidate updates (using standard A1-I9 notation)
                     print(
                         f"Updated candidates at {get_cell_location(r, c)}: {old_candidates} → {cell.get_candidates()}"
                     )

@@ -10,6 +10,7 @@ from logic.naked_single import apply_all_naked_singles
 from logic.hidden_single import apply_all_hidden_singles
 from logic.hidden_pairs import apply_all_hidden_pairs
 from logic.naked_pairs import apply_all_naked_pairs
+from helpers.get_location import get_cell_location
 
 
 class EnhancedSudokuSolver:
@@ -111,7 +112,7 @@ class EnhancedSudokuSolver:
                         for col in range(9):
                             if before_grid[row][col] == 0 and after_grid[row][col] != 0:
                                 solved_positions.append(
-                                    f"R{row+1}C{col+1}={after_grid[row][col]}"
+                                    f"{get_cell_location(row, col)}={after_grid[row][col]}"
                                 )
 
                     # Find candidate changes
@@ -130,7 +131,7 @@ class EnhancedSudokuSolver:
                                     candidate_changes.append(
                                         {
                                             "position": (row, col),
-                                            "location": f"R{row+1}C{col+1}",
+                                            "location": get_cell_location(row, col),
                                             "eliminated": eliminated,
                                             "old_candidates": before_candidates[row][
                                                 col

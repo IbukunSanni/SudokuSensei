@@ -4,6 +4,7 @@ Test script to demonstrate the enhanced solver with candidate tracking.
 
 import json
 from services.enhanced_solver import enhanced_solver
+from helpers.get_location import get_cell_location
 
 
 def print_grid(grid):
@@ -83,7 +84,7 @@ def test_enhanced_solver():
             print("Sample candidates:")
             for r, c in [(0, 2), (1, 1), (2, 0)]:  # Sample positions
                 if step["grid"][r][c] == 0:  # Only show for unsolved cells
-                    print(f"  R{r+1}C{c+1}:", end=" ")
+                    print(f"  {get_cell_location(r, c)}:", end=" ")
                     print_candidates(step["candidates"], r, c)
 
         print("-" * 60)
