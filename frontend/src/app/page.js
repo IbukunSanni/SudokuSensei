@@ -23,7 +23,7 @@ const defaultPuzzle = [
 
 
 // Helper to generate proper Sudoku board styling
-function getSudokuCellStyle(rowIdx, colIdx, isInput = true, isDuplicate = false) {
+function getSudokuCellStyle(rowIdx, colIdx, isInput = true, isDuplicate = false, isInAffectedUnit = false) {
   const baseStyle = {
     width: "3rem",
     height: "3rem",
@@ -34,11 +34,16 @@ function getSudokuCellStyle(rowIdx, colIdx, isInput = true, isDuplicate = false)
     backgroundColor: isInput ? "white" : "#f8f9fa",
   };
 
-  // Highlight duplicate cells
+  // Highlight duplicate cells in red (highest priority)
   if (isDuplicate) {
     baseStyle.backgroundColor = isInput ? "#ffebee" : "#ffcdd2";
     baseStyle.color = "#d32f2f";
     baseStyle.border = "2px solid #f44336";
+  }
+  // Highlight affected units in yellow (lower priority)
+  else if (isInAffectedUnit) {
+    baseStyle.backgroundColor = isInput ? "#fffde7" : "#fff9c4";
+    baseStyle.border = "1px solid #fbc02d";
   }
 
   // Thick borders for 3x3 box separation
@@ -64,39 +69,52 @@ export default function Page() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Function to detect duplicates in rows, columns, and 3x3 boxes
-  const getDuplicateCells = (grid) => {
+  // Function to detect duplicates and affected units
+  const getHighlightInfo = (grid) => {
     const duplicates = new Set();
+    const affectedRows = new Set();
+    const affectedCols = new Set();
+    const affectedBoxes = new Set();
 
     // Check rows
     for (let row = 0; row < 9; row++) {
       const seen = new Map();
+      let hasRowDuplicate = false;
       for (let col = 0; col < 9; col++) {
         const value = grid[row][col];
         if (value !== 0) {
           if (seen.has(value)) {
             duplicates.add(`${row}-${col}`);
             duplicates.add(`${row}-${seen.get(value)}`);
+            hasRowDuplicate = true;
           } else {
             seen.set(value, col);
           }
         }
+      }
+      if (hasRowDuplicate) {
+        affectedRows.add(row);
       }
     }
 
     // Check columns
     for (let col = 0; col < 9; col++) {
       const seen = new Map();
+      let hasColDuplicate = false;
       for (let row = 0; row < 9; row++) {
         const value = grid[row][col];
         if (value !== 0) {
           if (seen.has(value)) {
             duplicates.add(`${row}-${col}`);
             duplicates.add(`${seen.get(value)}-${col}`);
+            hasColDuplicate = true;
           } else {
             seen.set(value, row);
           }
         }
+      }
+      if (hasColDuplicate) {
+        affectedCols.add(col);
       }
     }
 
@@ -104,6 +122,7 @@ export default function Page() {
     for (let boxRow = 0; boxRow < 3; boxRow++) {
       for (let boxCol = 0; boxCol < 3; boxCol++) {
         const seen = new Map();
+        let hasBoxDuplicate = false;
         for (let row = boxRow * 3; row < boxRow * 3 + 3; row++) {
           for (let col = boxCol * 3; col < boxCol * 3 + 3; col++) {
             const value = grid[row][col];
@@ -111,19 +130,23 @@ export default function Page() {
               if (seen.has(value)) {
                 duplicates.add(`${row}-${col}`);
                 duplicates.add(seen.get(value));
+                hasBoxDuplicate = true;
               } else {
                 seen.set(value, `${row}-${col}`);
               }
             }
           }
         }
+        if (hasBoxDuplicate) {
+          affectedBoxes.add(`${boxRow}-${boxCol}`);
+        }
       }
     }
 
-    return duplicates;
+    return { duplicates, affectedRows, affectedCols, affectedBoxes };
   };
 
-  const duplicateCells = getDuplicateCells(puzzle);
+  const highlightInfo = getHighlightInfo(puzzle);
 
   const handleChange = (row, col, value) => {
     if (value === "" || /^[1-9]$/.test(value)) {
@@ -221,7 +244,13 @@ export default function Page() {
             {puzzle.map((row, rIdx) =>
               row.map((value, cIdx) => {
                 const cellKey = `${rIdx}-${cIdx}`;
-                const isDuplicate = duplicateCells.has(cellKey);
+                const isDuplicate = highlightInfo.duplicates.has(cellKey);
+                const boxKey = `${Math.floor(rIdx / 3)}-${Math.floor(cIdx / 3)}`;
+                const isInAffectedUnit = 
+                  highlightInfo.affectedRows.has(rIdx) ||
+                  highlightInfo.affectedCols.has(cIdx) ||
+                  highlightInfo.affectedBoxes.has(boxKey);
+                
                 return (
                   <input
                     key={cellKey}
@@ -230,17 +259,17 @@ export default function Page() {
                     value={value === 0 ? "" : value}
                     onChange={(e) => handleChange(rIdx, cIdx, e.target.value)}
                     style={{
-                      ...getSudokuCellStyle(rIdx, cIdx, true, isDuplicate),
+                      ...getSudokuCellStyle(rIdx, cIdx, true, isDuplicate, isInAffectedUnit),
                       outline: "none",
                       transition: "background-color 0.2s",
                     }}
                     onFocus={(e) => {
-                      if (!isDuplicate) {
+                      if (!isDuplicate && !isInAffectedUnit) {
                         e.target.style.backgroundColor = "#e3f2fd";
                       }
                     }}
                     onBlur={(e) => {
-                      if (!isDuplicate) {
+                      if (!isDuplicate && !isInAffectedUnit) {
                         e.target.style.backgroundColor = "white";
                       }
                     }}
@@ -252,7 +281,7 @@ export default function Page() {
         </div>
 
         {/* Duplicate warning */}
-        {duplicateCells.size > 0 && (
+        {highlightInfo.duplicates.size > 0 && (
           <div
             style={{
               backgroundColor: "#ffebee",
@@ -267,7 +296,7 @@ export default function Page() {
               ⚠️ Duplicate numbers detected! 
             </span>
             <span style={{ color: "#666", marginLeft: "0.5rem" }}>
-              Highlighted cells violate Sudoku rules.
+              Red cells have duplicates, yellow areas show affected rows/columns/boxes.
             </span>
           </div>
         )}
