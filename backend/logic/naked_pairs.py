@@ -1,5 +1,6 @@
 from helpers.get_location import get_cell_location
 from logic.technique_step import TechniqueStep
+from logic.unit_processor import process_all_units
 
 
 def apply_one_naked_pair(board):
@@ -48,28 +49,8 @@ def apply_one_naked_pair(board):
                 for idx in idxs:
                     focus_cells.append(positions[idx])
 
-    # Process all rows
-    for r in range(9):
-        row_cells = board.get_row(r)
-        row_positions = [(r, c) for c in range(9)]
-        process_unit(row_cells, row_positions)
-    # Process all columns
-    for c in range(9):
-        col_cells = board.get_col(c)
-        col_positions = [(r, c) for r in range(9)]
-        process_unit(col_cells, col_positions)
-    # Process all 3x3 boxes
-    for br in range(3):
-        for bc in range(3):
-            box_cells = []
-            box_positions = []
-            for dr in range(3):
-                for dc in range(3):
-                    r = br * 3 + dr
-                    c = bc * 3 + dc
-                    box_cells.append(board.grid[r][c])
-                    box_positions.append((r, c))
-            process_unit(box_cells, box_positions)
+    # Process all units using shared utility
+    process_all_units(board, process_unit)
 
     if not changed:
         return False, None

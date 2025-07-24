@@ -1,4 +1,6 @@
 from helpers.get_location import get_cell_location
+from logic.technique_step import TechniqueStep
+from logic.unit_processor import process_all_units
 
 
 def apply_one_hidden_pair(board):
@@ -6,14 +8,17 @@ def apply_one_hidden_pair(board):
     Apply one hidden pair technique on the board.
     Returns:
       changed (bool): True if any candidates were eliminated.
-      info (str): Description of what was done, or None if nothing done.
+      step (TechniqueStep): Step description/details (or None if nothing changed)
     """
+    # Ensure candidates are up to date
     board.update_candidates()
-    changed = False
-    info = None
 
-    def process_unit(cells, unit_name):
-        nonlocal changed, info
+    changed = False
+    focus_cells = []
+    elimination_map = {}  # str(candidate) -> list of (r,c)
+
+    def process_unit(cells, positions):
+        nonlocal changed, focus_cells, elimination_map
 
         # Map candidate -> set of indices where candidate appears
         candidate_positions = {n: set() for n in range(1, 10)}
@@ -39,54 +44,42 @@ def apply_one_hidden_pair(board):
                         allowed = {c1, c2}
                         if not current_candidates.issubset(allowed):
                             # Eliminate other candidates
+                            eliminated = current_candidates - allowed
                             new_candidates = current_candidates.intersection(allowed)
                             cell.set_candidates(new_candidates)
                             changed = True
-                            location = get_cell_location(
-                                # If unit is row or column, row and col are known; for box we calculate below
-                                *get_cell_position_in_unit(unit_name, pos)
-                            )
-                            info = (
-                                f"Hidden Pair {c1} and {c2} found in {unit_name} "
-                                f"at cells {', '.join(get_cell_location(*get_cell_position_in_unit(unit_name, p)) for p in pos1)}. "
-                                f"Candidates reduced to {allowed} at {location}."
-                            )
-                            print(info)
 
-    def get_cell_position_in_unit(unit_name, pos):
-        # Returns (row, col) of pos-th cell in the given unit for printing location
-        # unit_name format: e.g. 'row 3', 'col 5', 'box 1,2'
-        if unit_name.startswith("row"):
-            r = int(unit_name.split()[1])
-            c = pos
-            return (r, c)
-        elif unit_name.startswith("col"):
-            c = int(unit_name.split()[1])
-            r = pos
-            return (r, c)
-        elif unit_name.startswith("box"):
-            parts = unit_name.split()
-            br, bc = map(int, parts[1].split(","))
-            r = br * 3 + pos // 3
-            c = bc * 3 + pos % 3
-            return (r, c)
+                            # Track eliminations
+                            cell_pos = positions[pos]
+                            for v in eliminated:
+                                elimination_map.setdefault(str(v), []).append(cell_pos)
 
-    # Process rows
-    for r in range(9):
-        process_unit(board.get_row(r), f"row {r}")
-    # Process columns
-    for c in range(9):
-        process_unit(board.get_col(c), f"col {c}")
-    # Process boxes
-    for br in range(3):
-        for bc in range(3):
-            box_cells = []
-            for r in range(br * 3, br * 3 + 3):
-                for c in range(bc * 3, bc * 3 + 3):
-                    box_cells.append(board.grid[r][c])
-            process_unit(box_cells, f"box {br},{bc}")
+                    # Mark the pair cells for focus/highlight
+                    for pos in pos1:
+                        focus_cells.append(positions[pos])
 
-    return changed
+    # Process all units using shared utility
+    process_all_units(board, process_unit)
+
+    if not changed:
+        return False, None
+
+    # Build human-readable description
+    lines = []
+    for cand, poses in elimination_map.items():
+        locs = [get_cell_location(r, c) for (r, c) in poses]
+        lines.append(f"Eliminated {cand} from {locs}")
+    description = "Hidden Pair elimination:\n" + "\n".join(lines)
+    eliminations = [{k: v} for k, v in elimination_map.items()]
+
+    step = TechniqueStep(
+        technique="Hidden Pair",
+        description=description,
+        focus_cells=focus_cells,
+        value=None,
+        eliminations=eliminations,
+    )
+    return True, step
 
 
 def apply_all_hidden_pairs(board):
@@ -94,11 +87,14 @@ def apply_all_hidden_pairs(board):
     Apply hidden pair technique repeatedly until no more changes.
     Returns:
       changed (bool): True if any candidates were eliminated during the process.
+      steps (list): List of TechniqueStep objects for each application
     """
     changed = False
+    steps = []
     while True:
-        step_changed = apply_one_hidden_pair(board)
+        step_changed, step = apply_one_hidden_pair(board)
         if not step_changed:
             break
         changed = True
-    return changed
+        steps.append(step)
+    return changed, steps

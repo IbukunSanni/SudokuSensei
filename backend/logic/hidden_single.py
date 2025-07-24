@@ -1,5 +1,6 @@
 from helpers.get_location import get_cell_location
 from logic.technique_step import TechniqueStep
+from logic.unit_processor import process_all_units
 
 
 def apply_one_hidden_single(board):
@@ -73,34 +74,23 @@ def apply_one_hidden_single(board):
             eliminations=eliminations,
         )
 
-    # Check rows
-    for r in range(9):
-        cells = board.get_row(r)
+    # Track if we found a hidden single
+    found_result = [None]  # Use list to allow modification in nested function
+
+    def process_unit(cells, positions):
+        if found_result[0] is not None:  # Already found one, skip processing
+            return
         pos, value = find_hidden_single_in_unit(cells)
         if pos is not None:
-            return True, create_step(r, pos, value)
+            r, c = positions[pos]
+            found_result[0] = (True, create_step(r, c, value))
 
-    # Check columns
-    for c in range(9):
-        cells = board.get_col(c)
-        pos, value = find_hidden_single_in_unit(cells)
-        if pos is not None:
-            return True, create_step(pos, c, value)
+    # Process all units using shared utility
+    process_all_units(board, process_unit)
 
-    # Check 3x3 boxes
-    for br in range(3):
-        for bc in range(3):
-            cells = []
-            positions = []
-            for i in range(3):
-                for j in range(3):
-                    rr, cc = br * 3 + i, bc * 3 + j
-                    cells.append(board.grid[rr][cc])
-                    positions.append((rr, cc))
-            pos, value = find_hidden_single_in_unit(cells)
-            if pos is not None:
-                rr, cc = positions[pos]
-                return True, create_step(rr, cc, value)
+    # Return result if found, otherwise no hidden single
+    if found_result[0] is not None:
+        return found_result[0]
 
     return False, None
 
