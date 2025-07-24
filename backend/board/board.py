@@ -20,41 +20,82 @@ class SudokuBoard:
             for j in range(start_col, start_col + 3)
         ]
 
-    def update_candidates(self):
+    def update_candidates_for_cells(self, positions):
         """
-        Update candidates for all cells based on current board state.
-        Returns a list of changes made to candidates for tracking purposes.
+        Update candidates for a list of (row, col) positions based on current board state.
+        Returns a list of candidate-change dicts for tracking/explanation.
         """
         changes = []
-        for r in range(9):
-            for c in range(9):
-                cell = self.grid[r][c]
-                if cell.is_solved():
-                    continue
-
-                used_values = (
-                    {c2.get_value() for c2 in self.get_row(r) if c2.is_solved()}
-                    | {c2.get_value() for c2 in self.get_col(c) if c2.is_solved()}
-                    | {c2.get_value() for c2 in self.get_box(r, c) if c2.is_solved()}
+        for r, c in positions:
+            cell = self.grid[r][c]
+            if cell.is_solved():
+                continue
+            used_values = (
+                {peer.get_value() for peer in self.get_row(r) if peer.is_solved()}
+                | {peer.get_value() for peer in self.get_col(c) if peer.is_solved()}
+                | {peer.get_value() for peer in self.get_box(r, c) if peer.is_solved()}
+            )
+            old = cell.get_candidates()
+            new = old - used_values
+            if new != old:
+                cell.set_candidates(new)
+                eliminated = old - new
+                changes.append(
+                    {
+                        "position": (r, c),
+                        "location": get_cell_location(r, c),
+                        "old_candidates": old,
+                        "new_candidates": new,
+                        "eliminated": eliminated,
+                    }
                 )
+                print(f"Updated candidates at {get_cell_location(r, c)}: {old} → {new}")
+        return changes
 
-                old_candidates = cell.get_candidates().copy()
-                cell.set_candidates(cell.get_candidates() - used_values)
+    def update_candidates(self):
+        """
+        Update candidates for all cells on the board.
+        Returns a list of all candidate changes.
+        """
+        all_positions = [(r, c) for r in range(9) for c in range(9)]
+        return self.update_candidates_for_cells(all_positions)
 
-                if old_candidates != cell.get_candidates():
-                    eliminated = old_candidates - cell.get_candidates()
+    def update_peers_candidates(self, r, c, value):
+        """
+        After setting a value at (r, c), remove `value` from candidates
+        of all peer cells in the same row, column, and 3×3 box.
+        Returns the list of changes made.
+        """
+        # Collect all peer positions (excluding the cell itself)
+        peers = set()
+        peers.update((r, i) for i in range(9) if i != c)
+        peers.update((i, c) for i in range(9) if i != r)
+        box_r, box_c = (r // 3) * 3, (c // 3) * 3
+        for rr in range(box_r, box_r + 3):
+            for cc in range(box_c, box_c + 3):
+                if (rr, cc) != (r, c):
+                    peers.add((rr, cc))
+        # Remove the value from all unsolved peers' candidates
+        changes = []
+        for pr, pc in peers:
+            peer = self.grid[pr][pc]
+            if not peer.is_solved():
+                old = peer.get_candidates()
+                new = old - {value}
+                if new != old:
+                    peer.set_candidates(new)
+                    eliminated = old - new
                     changes.append(
                         {
-                            "position": (r, c),
-                            "location": get_cell_location(r, c),
-                            "old_candidates": old_candidates,
-                            "new_candidates": cell.get_candidates().copy(),
+                            "position": (pr, pc),
+                            "location": get_cell_location(pr, pc),
+                            "old_candidates": old,
+                            "new_candidates": new,
                             "eliminated": eliminated,
                         }
                     )
-                    # Debug output showing candidate updates (using standard A1-I9 notation)
                     print(
-                        f"Updated candidates at {get_cell_location(r, c)}: {old_candidates} → {cell.get_candidates()}"
+                        f"Updated candidates at {get_cell_location(pr, pc)}: {old} → {new}"
                     )
         return changes
 

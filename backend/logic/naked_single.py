@@ -20,6 +20,8 @@ def apply_one_naked_single(board):
                     value = candidates.pop()
                     cell.set_value(value)
                     cell.set_candidates(set())
+                    # Use board method to update candidates in row, column, and box
+                    board.update_peers_candidates(r, c, value)
                     print()
                     print(
                         f"Naked Single: Filled cell at {get_cell_location(r, c)} with {value}"

@@ -82,7 +82,23 @@ function SuccessResult({ successResult }) {
     marginBottom: "1.5rem",
     fontStyle: "italic",
   };
-  
+
+  const stepContainerStyle = {
+    margin: "2rem 0",
+    textAlign: "left",
+  };
+
+  const stepTitleStyle = {
+    fontWeight: "bold",
+    marginBottom: "0.5rem",
+    color: "#1976d2",
+  };
+
+  const stepDescStyle = {
+    marginBottom: "0.5rem",
+    color: "#333",
+  };
+
   return (
     <div>
       <h2 style={titleStyle}>
@@ -100,6 +116,25 @@ function SuccessResult({ successResult }) {
         solvedGrid={successResult.solved_grid}
         isSolved={successResult.is_solved}
       />
+
+      {/* Show step-by-step process if available */}
+      {successResult.solving_steps && successResult.solving_steps.length > 0 && (
+        <div style={stepContainerStyle}>
+          <h3>Solving Steps</h3>
+          {successResult.solving_steps.map((step, idx) => (
+            <div key={idx} style={{marginBottom: '2rem', border: '1px solid #eee', borderRadius: 8, padding: '1rem', background: '#fafbfc'}}>
+              <div style={stepTitleStyle}>Step {idx + 1}: {step.technique}</div>
+              <div style={stepDescStyle}>{step.description}</div>
+              <SudokuGrid puzzle={step.grid} isReadOnly={true} />
+              {step.explanation && (
+                <div style={{color: '#555', fontSize: '0.95rem', marginTop: '0.5rem'}}>
+                  <strong>Explanation:</strong> {step.explanation}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
