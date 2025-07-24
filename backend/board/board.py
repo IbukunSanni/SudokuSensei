@@ -20,6 +20,22 @@ class SudokuBoard:
             for j in range(start_col, start_col + 3)
         ]
 
+    def get_peer_positions(self, r: int, c: int) -> set[tuple[int, int]]:
+        """
+        Return all (row,col) positions that share a row, column, or box with (r,c), excluding (r,c) itself.
+        """
+        peers = set()
+        # same row & column
+        peers.update((r, i) for i in range(9) if i != c)
+        peers.update((i, c) for i in range(9) if i != r)
+        # same 3×3 box
+        br, bc = 3 * (r // 3), 3 * (c // 3)
+        for rr in range(br, br + 3):
+            for cc in range(bc, bc + 3):
+                if (rr, cc) != (r, c):
+                    peers.add((rr, cc))
+        return peers
+
     def update_candidates_for_cells(self, positions):
         """
         Update candidates for a list of (row, col) positions based on current board state.
@@ -66,16 +82,7 @@ class SudokuBoard:
         of all peer cells in the same row, column, and 3×3 box.
         Returns the list of changes made.
         """
-        # Collect all peer positions (excluding the cell itself)
-        peers = set()
-        peers.update((r, i) for i in range(9) if i != c)
-        peers.update((i, c) for i in range(9) if i != r)
-        box_r, box_c = (r // 3) * 3, (c // 3) * 3
-        for rr in range(box_r, box_r + 3):
-            for cc in range(box_c, box_c + 3):
-                if (rr, cc) != (r, c):
-                    peers.add((rr, cc))
-        # Remove the value from all unsolved peers' candidates
+        peers = self.get_peer_positions(r, c)
         changes = []
         for pr, pc in peers:
             peer = self.grid[pr][pc]
@@ -112,13 +119,6 @@ class SudokuBoard:
 
     def display_with_candidates(self):
         def format_candidates(candidates):
-            """
-            Returns a list of 3 strings representing the candidate mini-grid:
-            1 2 3
-            4 5 6
-            7 8 9
-            Shows '.' where a candidate is missing.
-            """
             return [
                 "".join(str(i) if i in candidates else "." for i in range(1, 4)),
                 "".join(str(i) if i in candidates else "." for i in range(4, 7)),
@@ -126,7 +126,6 @@ class SudokuBoard:
             ]
 
         def format_value(value):
-            """Center a solved value in the middle of a 3x3 space"""
             return ["...", f".{value}.", "..."]
 
         num_rows = len(self.grid)
@@ -134,41 +133,28 @@ class SudokuBoard:
         sub_rows = []
 
         for r in range(num_rows):
-            # Each full row of cells will produce 3 display lines
             row_lines = ["", "", ""]
-
             for c in range(num_cols):
                 cell = self.grid[r][c]
-
-                # Choose how to render this cell: either its value or its candidates
                 cell_grid = (
                     format_value(cell.get_value())
                     if cell.is_solved()
                     else format_candidates(cell.get_candidates())
                 )
-
-                # Add the mini-grid lines to the current row_lines
                 for i in range(3):
                     row_lines[i] += cell_grid[i]
                     row_lines[i] += " || " if c in [2, 5] else " | "
-
-            # Add the 3 constructed lines to the output
             sub_rows.extend(row_lines)
+            sub_rows.append(
+                "=" * (num_cols * 6 + 1) if r in [2, 5, 8] else "-" * (num_cols * 6 + 1)
+            )
 
-            # After every 3 rows, add a thick or thin horizontal border
-            if r in [2, 5, 8]:
-                sub_rows.append("=" * (num_cols * 6 + 1))
-            else:
-                sub_rows.append("-" * (num_cols * 6 + 1))
-
-        # Print the full board display
         for sub_row in sub_rows:
             print(sub_row)
 
     def get_candidates_grid(self):
         """
         Returns a 9x9 grid of candidate sets for each cell.
-        This is useful for tracking the state of candidates at each step.
         """
         return [[cell.get_candidates().copy() for cell in row] for row in self.grid]
 
@@ -181,7 +167,6 @@ class SudokuBoard:
                 cell = self.grid[r][c]
                 if not cell.is_solved():
                     return False
-
                 val = cell.get_value()
                 # Check row uniqueness
                 row_vals = [self.grid[r][j].get_value() for j in range(9) if j != c]
@@ -202,5 +187,4 @@ class SudokuBoard:
                 ]
                 if val in box_vals:
                     return False
-
         return True
