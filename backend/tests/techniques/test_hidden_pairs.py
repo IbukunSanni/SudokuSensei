@@ -9,33 +9,41 @@ from helpers.get_location import get_cell_location
 
 def make_board_with_hidden_pairs():
     """
-    Create a board with a hidden pair scenario.
+    Create a board with a hidden pair scenario using a realistic Sudoku grid.
 
-    In this setup, candidates 1 and 2 appear only in cells R1C1 and R1C2
-    within the first row, making them a hidden pair.
+    This uses the provided Sudoku puzzle and creates a hidden pairs scenario
+    by manually setting up candidates where needed.
     """
-    # Start with empty grid
-    grid = [[0 for _ in range(9)] for _ in range(9)]
+    # Use the realistic Sudoku grid you provided
+    grid = [
+        [0, 0, 9, 0, 3, 2, 0, 0, 0],
+        [0, 0, 0, 7, 0, 0, 0, 0, 0],
+        [1, 6, 2, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 2, 0, 5, 6, 0],
+        [0, 0, 0, 9, 0, 0, 0, 0, 0],
+        [0, 5, 0, 0, 0, 0, 1, 0, 7],
+        [0, 0, 0, 0, 0, 0, 4, 0, 3],
+        [0, 2, 6, 0, 0, 9, 0, 0, 0],
+        [0, 0, 5, 8, 7, 0, 0, 0, 0],
+    ]
+
     board = SudokuBoard(grid)
 
-    # Set up a scenario where 1 and 2 are hidden pairs in R1C1 and R1C2
-    # Fill some cells to create constraints
-    board.grid[0][2].set_value(3)  # R1C3 = 3
-    board.grid[0][3].set_value(4)  # R1C4 = 4
-    board.grid[0][4].set_value(5)  # R1C5 = 5
-    board.grid[0][5].set_value(6)  # R1C6 = 6
-    board.grid[0][6].set_value(7)  # R1C7 = 7
-    board.grid[0][7].set_value(8)  # R1C8 = 8
-    board.grid[0][8].set_value(9)  # R1C9 = 9
+    # Let the board calculate natural candidates first
+    board.update_candidates()
 
-    # Set up candidates manually to create hidden pair scenario
-    # R1C1 and R1C2 should have candidates {1, 2} plus some others
-    # But 1 and 2 should only appear in these two cells in the row
-    board.grid[0][0].set_candidates({1, 2, 3, 4})  # Will be reduced to {1, 2}
-    board.grid[0][1].set_candidates({1, 2, 5, 6})  # Will be reduced to {1, 2}
+    # Now create a hidden pair scenario in row 1 (index 0)
+    # We'll set up candidates so that 4 and 8 are hidden pairs in R1C1 and R1C2
 
-    # Other cells in row should not have 1 or 2 as candidates
-    # (they're already filled with 3-9)
+    # Set up R1C1 and R1C2 to contain the hidden pair {4, 8} plus other candidates
+    board.grid[0][0].set_candidates({4, 8, 5, 7})  # Hidden pair {4,8} + others {5,7}
+    board.grid[0][1].set_candidates({4, 8, 5, 6})  # Hidden pair {4,8} + others {5,6}
+
+    # Make sure other empty cells in row 1 don't have 4 or 8 (making them "hidden")
+    board.grid[0][3].set_candidates({1, 5, 6})  # R1C4 - no 4 or 8
+    board.grid[0][6].set_candidates({6, 7})  # R1C7 - no 4 or 8
+    board.grid[0][7].set_candidates({1, 5})  # R1C8 - no 4 or 8
+    board.grid[0][8].set_candidates({1, 5, 6})  # R1C9 - no 4 or 8
 
     return board
 
@@ -61,18 +69,20 @@ def test_hidden_pairs_elimination():
     print(f"R1C1 candidates: {sorted(board.grid[0][0].get_candidates())}")
     print(f"R1C2 candidates: {sorted(board.grid[0][1].get_candidates())}")
 
-    # Both cells should now only have candidates {1, 2}
+    # Both cells should now only have candidates {4, 8} (the hidden pair)
     assert board.grid[0][0].get_candidates() == {
-        1,
-        2,
-    }, f"Expected {{1, 2}}, got {board.grid[0][0].get_candidates()}"
+        4,
+        8,
+    }, f"Expected {{4, 8}}, got {board.grid[0][0].get_candidates()}"
     assert board.grid[0][1].get_candidates() == {
-        1,
-        2,
-    }, f"Expected {{1, 2}}, got {board.grid[0][1].get_candidates()}"
+        4,
+        8,
+    }, f"Expected {{4, 8}}, got {board.grid[0][1].get_candidates()}"
 
     # Check step details
     assert step.technique == "Hidden Pair"
+    print(f"Focus cells count: {len(step.focus_cells)}")
+    print(f"Focus cells: {step.focus_cells}")
     assert len(step.focus_cells) == 2  # Should focus on the pair cells
     assert step.eliminations  # Should have eliminations
 
@@ -101,11 +111,11 @@ def test_no_hidden_pairs():
 
 
 if __name__ == "__main__":
-    print("🧩 TESTING HIDDEN PAIRS TECHNIQUE")
+    print("TESTING HIDDEN PAIRS TECHNIQUE")
     print("=" * 50)
 
     test_hidden_pairs_elimination()
     print("\n" + "=" * 50)
     test_no_hidden_pairs()
 
-    print("\n✅ All hidden pairs tests passed!")
+    print("\nAll hidden pairs tests passed!")

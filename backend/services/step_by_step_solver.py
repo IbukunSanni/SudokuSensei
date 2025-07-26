@@ -10,6 +10,7 @@ from logic.naked_single import apply_one_naked_single
 from logic.hidden_single import apply_one_hidden_single
 from logic.hidden_pairs import apply_one_hidden_pair
 from logic.naked_pairs import apply_one_naked_pair
+from logic.naked_triples import apply_one_naked_triple
 from helpers.get_location import get_cell_location
 from config.settings import settings
 
@@ -32,6 +33,7 @@ class StepByStepSolver:
             ("Hidden Single", apply_one_hidden_single),
             ("Naked Pair", apply_one_naked_pair),
             ("Hidden Pair", apply_one_hidden_pair),
+            ("Naked Triple", apply_one_naked_triple),
         ]
 
     def solve(self, puzzle: List[List[int]]) -> Dict[str, Any]:
@@ -239,6 +241,7 @@ class StepByStepSolver:
             "Hidden Single": "When a candidate appears only once within a row, column, or box, it must go in that cell",
             "Hidden Pair": "When two candidates appear only in the same two cells within a unit, other candidates can be eliminated from those cells",
             "Naked Pair": "When two cells in a unit contain the same two candidates, those candidates can be eliminated from other cells in that unit",
+            "Naked Triple": "When three cells in a unit contain the same three candidates between them, those candidates can be eliminated from other cells in that unit",
         }
         return explanations.get(
             technique_name, f"Applied {technique_name} solving technique"

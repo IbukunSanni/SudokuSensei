@@ -53,6 +53,7 @@ def main():
         ("tests/techniques/test_hidden_single.py", "Hidden Single Technique"),
         ("tests/techniques/test_naked_pairs.py", "Naked Pairs Technique"),
         ("tests/techniques/test_hidden_pairs.py", "Hidden Pairs Technique"),
+        ("tests/techniques/test_naked_triples.py", "Naked Triples Technique"),
         ("tests/test_single_technique.py", "Single Technique Application"),
         ("tests/test_frontend_solver.py", "Step-by-Step Solver"),
     ]

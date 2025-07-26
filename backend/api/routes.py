@@ -263,6 +263,7 @@ def solve_single_step(data: PuzzleInput):
     from logic.hidden_single import apply_one_hidden_single
     from logic.naked_pairs import apply_one_naked_pair
     from logic.hidden_pairs import apply_one_hidden_pair
+    from logic.naked_triples import apply_one_naked_triple
 
     board = SudokuBoard(data.puzzle)
     board.update_candidates()  # Initial constraint propagation
@@ -273,6 +274,7 @@ def solve_single_step(data: PuzzleInput):
         ("Hidden Single", apply_one_hidden_single),
         ("Naked Pair", apply_one_naked_pair),
         ("Hidden Pair", apply_one_hidden_pair),
+        ("Naked Triple", apply_one_naked_triple),
     ]
 
     for technique_name, technique_func in techniques:

@@ -8,17 +8,17 @@ from services.step_by_step_solver import step_by_step_solver
 def print_grid(grid, title="Grid"):
     """Print a Sudoku grid with title."""
     print(f"\n{title}:")
-    print("┌───────┬───────┬───────┐")
+    print("+-------+-------+-------+")
     for i, row in enumerate(grid):
-        print("│", end=" ")
+        print("|", end=" ")
         for j, cell in enumerate(row):
             print(cell if cell != 0 else ".", end=" ")
             if j % 3 == 2 and j < 8:
-                print("│", end=" ")
-        print("│")
+                print("|", end=" ")
+        print("|")
         if i % 3 == 2 and i < 8:
-            print("├───────┼───────┼───────┤")
-    print("└───────┴───────┴───────┘")
+            print("+-------+-------+-------+")
+    print("+-------+-------+-------+")
 
 
 def print_step_details(step, step_index):
@@ -83,7 +83,7 @@ def print_step_details(step, step_index):
 
 def test_step_by_step_solver():
     """Test the step-by-step solver that applies one technique at a time."""
-    print("🧩 STEP-BY-STEP SUDOKU SOLVER - ONE TECHNIQUE AT A TIME")
+    print("STEP-BY-STEP SUDOKU SOLVER - ONE TECHNIQUE AT A TIME")
     print("=" * 70)
 
     # Use a puzzle that will show multiple step types
@@ -104,13 +104,13 @@ def test_step_by_step_solver():
     # Solve with step-by-step solver (applies one technique at a time)
     result = step_by_step_solver.solve(puzzle)
 
-    print(f"\n📊 Solving Summary:")
+    print(f"\n Solving Summary:")
     print(f"   Puzzle solved: {result['is_solved']}")
     print(f"   Total steps: {result['total_steps']}")
     print(f"   Iterations: {result['iterations']}")
     print(f"   Techniques used: {', '.join(result['techniques_applied'])}")
 
-    print(f"\n🔍 Step-by-Step Process:")
+    print(f"\n Step-by-Step Process:")
 
     # Show each step with clear separation
     for i, step in enumerate(result["solving_steps"]):

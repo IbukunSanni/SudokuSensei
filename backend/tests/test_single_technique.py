@@ -7,27 +7,28 @@ from logic.naked_single import apply_one_naked_single
 from logic.hidden_single import apply_one_hidden_single
 from logic.naked_pairs import apply_one_naked_pair
 from logic.hidden_pairs import apply_one_hidden_pair
+from logic.naked_triples import apply_one_naked_triple
 
 
 def print_grid(grid, title="Grid"):
     """Print a Sudoku grid with title."""
     print(f"\n{title}:")
-    print("┌───────┬───────┬───────┐")
+    print("+-------+-------+-------+")
     for i, row in enumerate(grid):
-        print("│", end=" ")
+        print("|", end=" ")
         for j, cell in enumerate(row):
             print(cell if cell != 0 else ".", end=" ")
             if j % 3 == 2 and j < 8:
-                print("│", end=" ")
-        print("│")
+                print("|", end=" ")
+        print("|")
         if i % 3 == 2 and i < 8:
-            print("├───────┼───────┼───────┤")
-    print("└───────┴───────┴───────┘")
+            print("+-------+-------+-------+")
+    print("+-------+-------+-------+")
 
 
 def test_single_naked_single():
     """Test applying one naked single technique."""
-    print("🧩 TESTING SINGLE NAKED SINGLE APPLICATION")
+    print("TESTING SINGLE NAKED SINGLE APPLICATION")
     print("=" * 50)
 
     # Create a puzzle with a naked single
@@ -67,7 +68,7 @@ def test_single_naked_single():
 
 def test_single_hidden_single():
     """Test applying one hidden single technique."""
-    print("\n\n🧩 TESTING SINGLE HIDDEN SINGLE APPLICATION")
+    print("\n\nTESTING SINGLE HIDDEN SINGLE APPLICATION")
     print("=" * 50)
 
     # Create a puzzle with a hidden single
@@ -103,7 +104,7 @@ def test_single_hidden_single():
 
 def test_single_naked_pair():
     """Test applying one naked pair technique."""
-    print("\n\n🧩 TESTING SINGLE NAKED PAIR APPLICATION")
+    print("\n\nTESTING SINGLE NAKED PAIR APPLICATION")
     print("=" * 50)
 
     # Create a puzzle with naked pairs
@@ -151,7 +152,7 @@ def test_single_naked_pair():
 
 def test_technique_sequence():
     """Test applying techniques in sequence to see single-step behavior."""
-    print("\n\n🧩 TESTING TECHNIQUE SEQUENCE")
+    print("\n\nTESTING TECHNIQUE SEQUENCE")
     print("=" * 50)
 
     puzzle = [
@@ -176,6 +177,7 @@ def test_technique_sequence():
         ("Hidden Single", apply_one_hidden_single),
         ("Naked Pair", apply_one_naked_pair),
         ("Hidden Pair", apply_one_hidden_pair),
+        ("Naked Triple", apply_one_naked_triple),
     ]
 
     step_count = 0
@@ -187,7 +189,7 @@ def test_technique_sequence():
 
             if changed and step:
                 step_count += 1
-                print(f"✅ Step {step_count}: {technique_name}")
+                print(f" Step {step_count}: {technique_name}")
                 print(f"   {step.description}")
 
                 if step.value:

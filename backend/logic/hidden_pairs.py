@@ -20,6 +20,10 @@ def apply_one_hidden_pair(board):
     def process_unit(cells, positions):
         nonlocal changed, focus_cells, elimination_map
 
+        # If we already found a hidden pair, don't process more units
+        if changed:
+            return
+
         # Map candidate -> set of indices where candidate appears
         candidate_positions = {n: set() for n in range(1, 10)}
 

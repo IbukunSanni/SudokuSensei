@@ -65,7 +65,9 @@ class SudokuBoard:
                         "eliminated": eliminated,
                     }
                 )
-                print(f"Updated candidates at {get_cell_location(r, c)}: {old} → {new}")
+                print(
+                    f"Updated candidates at {get_cell_location(r, c)}: {old} -> {new}"
+                )
         return changes
 
     def update_candidates(self):
@@ -102,7 +104,7 @@ class SudokuBoard:
                         }
                     )
                     print(
-                        f"Updated candidates at {get_cell_location(pr, pc)}: {old} → {new}"
+                        f"Updated candidates at {get_cell_location(pr, pc)}: {old} -> {new}"
                     )
         return changes
 
