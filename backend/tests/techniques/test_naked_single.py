@@ -1,4 +1,3 @@
-import pytest
 from board.board import SudokuBoard
 from logic.naked_single import apply_one_naked_single
 

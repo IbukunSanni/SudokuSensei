@@ -1,4 +1,3 @@
-import pytest
 from board.board import SudokuBoard
 from logic.hidden_single import apply_one_hidden_single
 from helpers.get_location import get_cell_location
