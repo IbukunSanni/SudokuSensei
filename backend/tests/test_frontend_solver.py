@@ -1,8 +1,8 @@
 """
-Test the frontend-optimized solver with clear step separation.
+Test the step-by-step solver that applies one technique at a time.
 """
 
-from services.frontend_solver import frontend_solver
+from services.step_by_step_solver import step_by_step_solver
 
 
 def print_grid(grid, title="Grid"):
@@ -26,40 +26,7 @@ def print_step_details(step, step_index):
     step_type = step.get("step_type", "unknown")
 
     # Different formatting based on step type
-    if step_type == "initial_constraints":
-        print(f"\n{'='*60}")
-        print(f"🔧 INITIAL SETUP")
-        print(f"{'='*60}")
-        print(f"📋 {step['description']}")
-        print(f"🔍 Candidates eliminated: {step['candidates_eliminated']}")
-        print(f"💡 {step['explanation']}")
-
-    elif step_type == "technique":
-        print(f"\n{'='*60}")
-        print(f"🧠 {step['technique'].upper()}")
-        print(f"{'='*60}")
-        print(f"📋 {step['description']}")
-        print(f"💡 {step['explanation']}")
-
-        if step["cells_solved"] > 0:
-            print(f"✅ Cells filled: {', '.join(step['solved_positions'])}")
-
-        if step.get("candidate_changes"):
-            print(f"🔍 Technique eliminations: {len(step['candidate_changes'])}")
-            for change in step["candidate_changes"][:3]:  # Show first 3
-                eliminated = sorted(change["eliminated"])
-                remaining = (
-                    sorted(change["new_candidates"])
-                    if change["new_candidates"]
-                    else "solved"
-                )
-                print(f"   {change['location']}: removed {eliminated} → {remaining}")
-            if len(step["candidate_changes"]) > 3:
-                print(
-                    f"   ... and {len(step['candidate_changes'])-3} more eliminations"
-                )
-
-    elif step_type == "constraint_elimination":
+    if step_type == "constraint_elimination":
         print(f"\n{'─'*60}")
         print(f"⚙️  CONSTRAINT PROPAGATION")
         print(f"{'─'*60}")
@@ -77,14 +44,46 @@ def print_step_details(step, step_index):
             if len(affected_cells) > 8:
                 print(f"   ... and {len(affected_cells)-8} more cells")
 
+    else:  # technique step
+        print(f"\n{'='*60}")
+        print(f"🧠 {step.get('technique', 'UNKNOWN').upper()}")
+        if step.get("step_number"):
+            print(f"Step #{step['step_number']}")
+        print(f"{'='*60}")
+        print(f"📋 {step['description']}")
+        if step.get("explanation"):
+            print(f"💡 {step['explanation']}")
+
+        if step.get("cells_solved", 0) > 0:
+            print(f"✅ Cells filled: {', '.join(step.get('solved_positions', []))}")
+
+        if step.get("focus_cells"):
+            from helpers.get_location import get_cell_location
+
+            focus_locations = [get_cell_location(r, c) for r, c in step["focus_cells"]]
+            print(f"🎯 Focus cells: {', '.join(focus_locations)}")
+
+        if step.get("value"):
+            print(f"🔢 Value placed: {step['value']}")
+
+        if step.get("candidate_changes"):
+            print(f"🔍 Candidate eliminations: {len(step['candidate_changes'])}")
+            for change in step["candidate_changes"][:3]:  # Show first 3
+                eliminated = change.get("eliminated", [])
+                print(f"   {change['location']}: removed {eliminated}")
+            if len(step["candidate_changes"]) > 3:
+                print(
+                    f"   ... and {len(step['candidate_changes'])-3} more eliminations"
+                )
+
     # Show progress
     remaining = sum(1 for row in step["grid"] for cell in row if cell == 0)
     print(f"📊 Progress: {remaining} cells remaining")
 
 
-def test_frontend_solver():
-    """Test the frontend solver with step separation."""
-    print("🧩 FRONTEND SUDOKU SOLVER - CLEAR STEP SEPARATION")
+def test_step_by_step_solver():
+    """Test the step-by-step solver that applies one technique at a time."""
+    print("🧩 STEP-BY-STEP SUDOKU SOLVER - ONE TECHNIQUE AT A TIME")
     print("=" * 70)
 
     # Use a puzzle that will show multiple step types
@@ -102,13 +101,13 @@ def test_frontend_solver():
 
     print_grid(puzzle, "Initial Puzzle")
 
-    # Solve with frontend solver
-    result = frontend_solver.solve(puzzle)
+    # Solve with step-by-step solver (applies one technique at a time)
+    result = step_by_step_solver.solve(puzzle)
 
     print(f"\n📊 Solving Summary:")
     print(f"   Puzzle solved: {result['is_solved']}")
-    print(f"   Total logical steps: {result['total_logical_steps']}")
-    print(f"   Total display steps: {len(result['solving_steps'])}")
+    print(f"   Total steps: {result['total_steps']}")
+    print(f"   Iterations: {result['iterations']}")
     print(f"   Techniques used: {', '.join(result['techniques_applied'])}")
 
     print(f"\n🔍 Step-by-Step Process:")
@@ -147,7 +146,7 @@ def test_step_types():
         [0, 2, 0, 0, 0, 0, 1, 0, 0],
     ]
 
-    result = frontend_solver.solve(puzzle)
+    result = step_by_step_solver.solve(puzzle)
 
     # Analyze step types
     step_types = {}
@@ -175,7 +174,7 @@ def test_step_types():
 
 if __name__ == "__main__":
     # Test 1: Main functionality
-    test_frontend_solver()
+    test_step_by_step_solver()
 
     # Test 2: Step type analysis
     test_step_types()
