@@ -1,6 +1,6 @@
 from helpers.get_location import get_cell_location
-from logic.technique_step import TechniqueStep
-from logic.unit_processor import process_all_units
+from models.technique_step import TechniqueStep
+from utils.unit_processor import process_all_units
 
 
 def apply_one_naked_pair(board):

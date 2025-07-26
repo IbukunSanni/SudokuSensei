@@ -1,5 +1,5 @@
 from helpers.get_location import get_cell_location
-from logic.technique_step import TechniqueStep
+from models.technique_step import TechniqueStep
 
 
 def apply_one_naked_single(board):
