@@ -40,6 +40,38 @@ const apiService = {
       }
     }
   },
+
+  /**
+   * Applies a single solving step to the puzzle
+   * 
+   * @param {number[][]} puzzle - 9x9 Sudoku grid
+   * @returns {Promise} Promise with the single step result
+   */
+  applySingleStep: async (puzzle) => {
+    try {
+      const response = await axios.post(`${BACKEND_URL}/solve-step`, { puzzle });
+      return response.data;
+    } catch (error) {
+      const errorData = error.response?.data?.detail;
+      if (errorData && typeof errorData === "object") {
+        // Structured error from backend
+        return {
+          error: true,
+          error_type: errorData.error_type,
+          message: errorData.message,
+          suggestions: errorData.suggestions || [],
+        };
+      } else {
+        // Fallback for other errors
+        return {
+          error: true,
+          error_type: "UNKNOWN_ERROR",
+          message: error.response?.data?.detail || error.message,
+          suggestions: ["Please try again or check your network connection"],
+        };
+      }
+    }
+  },
 };
 
 export default apiService;

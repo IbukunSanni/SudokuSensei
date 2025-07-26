@@ -23,6 +23,12 @@ export default function ActionButton({ text, color, onClick, disabled = false })
       case 'red':
         className += " bg-red-500 hover:bg-red-600";
         break;
+      case 'purple':
+        className += " bg-purple-500 hover:bg-purple-600";
+        break;
+      case 'gray':
+        className += " bg-gray-500 hover:bg-gray-600";
+        break;
       case 'blue':
       default:
         className += " bg-blue-500 hover:bg-blue-600";

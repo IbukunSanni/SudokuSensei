@@ -264,6 +264,7 @@ def solve_single_step(data: PuzzleInput):
     from logic.naked_pairs import apply_one_naked_pair
     from logic.hidden_pairs import apply_one_hidden_pair
     from logic.naked_triples import apply_one_naked_triple
+    from helpers.get_location import get_cell_location
 
     board = SudokuBoard(data.puzzle)
     board.update_candidates()  # Initial constraint propagation

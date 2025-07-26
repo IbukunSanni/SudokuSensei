@@ -54,7 +54,9 @@ function SolutionCell({ rowIdx, colIdx, value, isSolved }) {
   // Add solution-specific styles
   cellStyle.lineHeight = "3rem";
   cellStyle.userSelect = "none";
-  cellStyle.backgroundColor = isSolved ? "#e8f5e8" : "#fff3e0";
+  cellStyle.backgroundColor = isSolved ? "#e3f2fd" : "#fff3e0";
+  cellStyle.color = isSolved ? "#1565c0" : "#333";
+  cellStyle.fontWeight = isSolved ? "bold" : "normal";
   
   return (
     <div style={cellStyle}>
@@ -68,11 +70,13 @@ function SolutionCell({ rowIdx, colIdx, value, isSolved }) {
  */
 export default function SudokuGrid({ 
   puzzle, 
+  originalPuzzle = null,
   highlightInfo, 
   onCellChange, 
   isReadOnly = false,
   solvedGrid = null,
-  isSolved = false
+  isSolved = false,
+  techniqueHighlight = null
 }) {
   const containerStyle = {
     display: "flex",
@@ -160,6 +164,16 @@ export default function SudokuGrid({
                     highlightInfo?.affectedCols.has(cIdx) ||
                     highlightInfo?.affectedBoxes.has(boxKey) || false;
 
+                  // Check if this cell is highlighted by a technique
+                  const isTechniqueFocus = techniqueHighlight?.focusCells?.some(
+                    ([focusRow, focusCol]) => focusRow === rIdx && focusCol === cIdx
+                  ) || false;
+
+                  // Check if this cell was solved (not in original puzzle)
+                  const wasSolved = originalPuzzle && 
+                    originalPuzzle[rIdx][cIdx] === 0 && 
+                    value !== 0;
+
                   return (
                     <SudokuCell
                       key={cellKey}
@@ -169,6 +183,9 @@ export default function SudokuGrid({
                       onChange={onCellChange}
                       isDuplicate={isDuplicate}
                       isInAffectedUnit={isInAffectedUnit}
+                      isTechniqueFocus={isTechniqueFocus}
+                      techniqueInfo={isTechniqueFocus ? techniqueHighlight : null}
+                      wasSolved={wasSolved}
                     />
                   );
                 })

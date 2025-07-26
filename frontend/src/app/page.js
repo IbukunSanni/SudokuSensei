@@ -23,8 +23,11 @@ import {
 export default function Page() {
   // State management
   const [puzzle, setPuzzle] = useState(emptyGrid);
+  const [originalPuzzle, setOriginalPuzzle] = useState(emptyGrid);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState(-1);
+  const [techniqueHighlight, setTechniqueHighlight] = useState(null);
 
   // Calculate highlighting information for the current puzzle
   const highlightInfo = getHighlightInfo(puzzle);
@@ -50,9 +53,70 @@ export default function Page() {
    */
   const solvePuzzle = async () => {
     setLoading(true);
+    setOriginalPuzzle(puzzle.map(row => [...row])); // Save original state
     const result = await apiService.solvePuzzle(puzzle);
     setResult(result);
+    setCurrentStepIndex(-1);
+    setTechniqueHighlight(null);
     setLoading(false);
+  };
+
+  /**
+   * Apply a single solving step
+   */
+  const applySingleStep = async () => {
+    setLoading(true);
+    if (originalPuzzle.every(row => row.every(cell => cell === 0))) {
+      setOriginalPuzzle(puzzle.map(row => [...row])); // Save original state if not set
+    }
+    const result = await apiService.applySingleStep(puzzle);
+    if (result && !result.error && result.solving_steps && result.solving_steps.length > 0) {
+      const step = result.solving_steps[0];
+      // Update puzzle with the new grid state
+      setPuzzle(result.solved_grid);
+      // Set technique highlighting
+      setTechniqueHighlight({
+        focusCells: step.focus_cells || [],
+        technique: step.technique,
+        description: step.description,
+        value: step.value
+      });
+    }
+    setResult(result);
+    setLoading(false);
+  };
+
+  /**
+   * Navigate through solving steps
+   */
+  const navigateStep = (direction) => {
+    if (!result || !result.solving_steps) return;
+    
+    const steps = result.solving_steps;
+    let newIndex = currentStepIndex;
+    
+    if (direction === 'next' && currentStepIndex < steps.length - 1) {
+      newIndex = currentStepIndex + 1;
+    } else if (direction === 'prev' && currentStepIndex > -1) {
+      newIndex = currentStepIndex - 1;
+    }
+    
+    setCurrentStepIndex(newIndex);
+    
+    if (newIndex >= 0) {
+      const step = steps[newIndex];
+      setPuzzle(step.grid);
+      setTechniqueHighlight({
+        focusCells: step.focus_cells || [],
+        technique: step.technique,
+        description: step.description,
+        value: step.value
+      });
+    } else {
+      // Back to original puzzle
+      setPuzzle(originalPuzzle);
+      setTechniqueHighlight(null);
+    }
   };
 
   /**
@@ -60,7 +124,10 @@ export default function Page() {
    */
   const loadDefaultPuzzle = () => {
     setPuzzle(defaultPuzzle);
+    setOriginalPuzzle(emptyGrid);
     setResult(null);
+    setCurrentStepIndex(-1);
+    setTechniqueHighlight(null);
   };
 
   /**
@@ -68,7 +135,10 @@ export default function Page() {
    */
   const clearPuzzle = () => {
     setPuzzle(emptyGrid);
+    setOriginalPuzzle(emptyGrid);
     setResult(null);
+    setCurrentStepIndex(-1);
+    setTechniqueHighlight(null);
   };
 
   const pageStyle = {
@@ -109,8 +179,10 @@ export default function Page() {
         {/* Editable Sudoku input grid */}
         <SudokuGrid
           puzzle={puzzle}
+          originalPuzzle={originalPuzzle}
           highlightInfo={highlightInfo}
           onCellChange={handleChange}
+          techniqueHighlight={techniqueHighlight}
         />
 
         {/* Duplicate warning */}
@@ -125,12 +197,67 @@ export default function Page() {
           />
           <ActionButton text="Clear" color="red" onClick={clearPuzzle} />
           <ActionButton
+            text={loading ? "Applying..." : "Apply Step"}
+            color="purple"
+            onClick={applySingleStep}
+            disabled={loading}
+          />
+          <ActionButton
             text={loading ? "Solving..." : "Solve Puzzle"}
             color="blue"
             onClick={solvePuzzle}
             disabled={loading}
           />
         </div>
+
+        {/* Step navigation */}
+        {result && result.solving_steps && result.solving_steps.length > 0 && (
+          <div style={{...buttonContainerStyle, marginTop: "1rem"}}>
+            <ActionButton
+              text="← Previous"
+              color="gray"
+              onClick={() => navigateStep('prev')}
+              disabled={currentStepIndex <= -1}
+            />
+            <span style={{
+              padding: "0.5rem 1rem",
+              fontSize: "0.9rem",
+              color: "#666"
+            }}>
+              Step {currentStepIndex + 1} of {result.solving_steps.length}
+            </span>
+            <ActionButton
+              text="Next →"
+              color="gray"
+              onClick={() => navigateStep('next')}
+              disabled={currentStepIndex >= result.solving_steps.length - 1}
+            />
+          </div>
+        )}
+
+        {/* Technique information */}
+        {techniqueHighlight && (
+          <div style={{
+            backgroundColor: "#f0f8ff",
+            border: "1px solid #4CAF50",
+            borderRadius: "5px",
+            padding: "1rem",
+            margin: "1rem 0",
+            textAlign: "center"
+          }}>
+            <h3 style={{margin: "0 0 0.5rem 0", color: "#4CAF50"}}>
+              {techniqueHighlight.technique}
+            </h3>
+            <p style={{margin: "0", fontSize: "0.9rem", color: "#666"}}>
+              {techniqueHighlight.description}
+            </p>
+            {techniqueHighlight.value && (
+              <p style={{margin: "0.5rem 0 0 0", fontWeight: "bold", color: "#333"}}>
+                Value: {techniqueHighlight.value}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Results display */}
         <ResultDisplay result={result} />
