@@ -69,6 +69,9 @@ class SolvingStep(BaseModel):
     solved_positions: Optional[List[str]] = Field(
         None, description="Positions of cells that were solved in this step"
     )
+    focus_cells: Optional[List[Tuple[int, int]]] = Field(
+        None, description="Cells that are the focus of this technique"
+    )
 
 
 class SolveResponse(BaseModel):
@@ -298,9 +301,12 @@ def solve_single_step(data: PuzzleInput):
                     [pos for elim in step.eliminations for pos in elim.values()]
                 ),
                 "candidate_changes": [],  # Could be enhanced to show detailed changes
+                "focus_cells": step.focus_cells,
                 "solved_positions": (
-                    [f"{get_cell_location(fc[0], fc[1])}={step.value}"]
-                    if step.value
+                    [
+                        f"{get_cell_location(step.focus_cells[0][0], step.focus_cells[0][1])}={step.value}"
+                    ]
+                    if step.value and step.focus_cells
                     else []
                 ),
             }
