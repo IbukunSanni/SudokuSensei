@@ -11,7 +11,7 @@ const BACKEND_URL =
 const apiService = {
   /**
    * Sends the puzzle to the backend for complete solving
-   * 
+   *
    * This function calls the /solve endpoint which applies all available techniques
    * until the puzzle is solved or no more progress can be made.
    *
@@ -51,7 +51,7 @@ const apiService = {
 
   /**
    * Applies a single solving step to the puzzle for educational step-by-step learning
-   * 
+   *
    * This function calls the /solve-step endpoint which applies only one technique
    * and returns detailed information for visual highlighting and learning.
    *
