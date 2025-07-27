@@ -22,12 +22,12 @@ import {
  */
 export default function Page() {
   // State management
-  const [puzzle, setPuzzle] = useState(emptyGrid);
-  const [originalPuzzle, setOriginalPuzzle] = useState(emptyGrid);
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [currentStepIndex, setCurrentStepIndex] = useState(-1);
-  const [techniqueHighlight, setTechniqueHighlight] = useState(null);
+  const [puzzle, setPuzzle] = useState(emptyGrid); // Current puzzle state
+  const [originalPuzzle, setOriginalPuzzle] = useState(emptyGrid); // Original puzzle for tracking solved cells
+  const [result, setResult] = useState(null); // Complete solving result
+  const [loading, setLoading] = useState(false); // Loading state for API calls
+  const [currentStepIndex, setCurrentStepIndex] = useState(-1); // Current step in navigation (-1 = original)
+  const [techniqueHighlight, setTechniqueHighlight] = useState(null); // Current technique highlighting info
 
   // Calculate highlighting information for the current puzzle
   const highlightInfo = getHighlightInfo(puzzle);
@@ -62,7 +62,13 @@ export default function Page() {
   };
 
   /**
-   * Apply a single solving step
+   * Apply a single solving step with technique highlighting
+   * 
+   * This function calls the backend to apply only one technique and then
+   * updates the UI to show:
+   * - Green highlighting on focus cells where the technique is applied
+   * - Blue styling on newly solved cells
+   * - Technique information display with description
    */
   const applySingleStep = async () => {
     setLoading(true);
@@ -74,12 +80,12 @@ export default function Page() {
       const step = result.solving_steps[0];
       // Update puzzle with the new grid state
       setPuzzle(result.solved_grid);
-      // Set technique highlighting
+      // Set technique highlighting for visual feedback
       setTechniqueHighlight({
-        focusCells: step.focus_cells || [],
-        technique: step.technique,
-        description: step.description,
-        value: step.value
+        focusCells: step.focus_cells || [], // Cells to highlight in green
+        technique: step.technique, // Technique name (e.g., "Naked Single")
+        description: step.description, // Human-readable explanation
+        value: step.value // Value that was placed (if any)
       });
     }
     setResult(result);
@@ -87,7 +93,10 @@ export default function Page() {
   };
 
   /**
-   * Navigate through solving steps
+   * Navigate through solving steps for educational review
+   * 
+   * Allows users to step forward/backward through the solving process
+   * to understand how each technique was applied with visual highlighting.
    */
   const navigateStep = (direction) => {
     if (!result || !result.solving_steps) return;

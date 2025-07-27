@@ -37,7 +37,10 @@ export function getSudokuCellStyle(
     transition: "background-color 0.2s",
   };
 
-  // Highlight duplicate cells in red (highest priority)
+  // Cell highlighting priority system (highest to lowest):
+  
+  // 1. DUPLICATE CELLS - Red highlighting (highest priority)
+  // Shows rule violations that need immediate attention
   if (isDuplicate) {
     baseStyle.backgroundColor = isInput ? "#ffebee" : "#ffcdd2";
     baseStyle.color = "#d32f2f";
@@ -46,7 +49,8 @@ export function getSudokuCellStyle(
     baseStyle.borderBottom = "2px solid #f44336";
     baseStyle.borderLeft = "2px solid #f44336";
   }
-  // Highlight technique focus cells in green (second highest priority)
+  // 2. TECHNIQUE FOCUS CELLS - Green highlighting (second highest priority)
+  // Shows where the current technique is being applied for educational purposes
   else if (isTechniqueFocus) {
     baseStyle.backgroundColor = isInput ? "#e8f5e8" : "#c8e6c8";
     baseStyle.color = "#2e7d32";
@@ -56,13 +60,15 @@ export function getSudokuCellStyle(
     baseStyle.borderLeft = "3px solid #4caf50";
     baseStyle.boxShadow = "0 0 8px rgba(76, 175, 80, 0.4)";
   }
-  // Highlight solved cells in blue (third priority)
+  // 3. SOLVED CELLS - Blue highlighting (third priority)
+  // Distinguishes cells solved by techniques from original puzzle clues
   else if (wasSolved) {
     baseStyle.backgroundColor = isInput ? "#e3f2fd" : "#bbdefb";
     baseStyle.color = "#1565c0";
     baseStyle.fontWeight = "bold";
   }
-  // Highlight affected units in yellow (lower priority)
+  // 4. AFFECTED UNITS - Yellow highlighting (lowest priority)
+  // Shows rows/columns/boxes that contain duplicate values
   else if (isInAffectedUnit) {
     baseStyle.backgroundColor = isInput ? "#fffde7" : "#fff9c4";
     baseStyle.borderTop = "1px solid #fbc02d";

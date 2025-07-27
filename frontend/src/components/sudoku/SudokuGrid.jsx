@@ -164,12 +164,14 @@ export default function SudokuGrid({
                     highlightInfo?.affectedCols.has(cIdx) ||
                     highlightInfo?.affectedBoxes.has(boxKey) || false;
 
-                  // Check if this cell is highlighted by a technique
+                  // Check if this cell is highlighted by a technique (green highlighting)
+                  // This shows where the current technique is being applied
                   const isTechniqueFocus = techniqueHighlight?.focusCells?.some(
                     ([focusRow, focusCol]) => focusRow === rIdx && focusCol === cIdx
                   ) || false;
 
-                  // Check if this cell was solved (not in original puzzle)
+                  // Check if this cell was solved by techniques (blue highlighting)
+                  // Compares current state with original puzzle to identify solved cells
                   const wasSolved = originalPuzzle && 
                     originalPuzzle[rIdx][cIdx] === 0 && 
                     value !== 0;
