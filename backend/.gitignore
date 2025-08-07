@@ -120,3 +120,4 @@ venv.bak/
 
 # SQLite files
 *.sqlite3
+.vercel
