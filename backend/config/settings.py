@@ -2,6 +2,7 @@
 Application configuration settings
 """
 
+import os
 from typing import List
 
 
@@ -13,13 +14,20 @@ class Settings:
     API_VERSION: str = "1.0"
     API_DESCRIPTION: str = "An educational Sudoku solver with step-by-step explanations"
 
-    # CORS Configuration
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-    ]
+    # CORS Configuration - Environment aware
+    @property
+    def CORS_ORIGINS(self) -> List[str]:
+        """Get CORS origins based on environment"""
+        if os.getenv("VERCEL_ENV"):  # Running on Vercel
+            return ["*"]  # Allow all origins in production
+        else:  # Local development
+            return [
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:3001",
+            ]
+
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]
