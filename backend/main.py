@@ -30,3 +30,4 @@ if __name__ == "__main__":
     # The server will start and listen for incoming HTTP requests
     # API endpoints defined in api/routes.py will be accessible at http://localhost:8000/
     # Swagger UI documentation will be available at http://localhost:8000/docs
+    # Auto-deployment test: Updated for Vercel Git integration
