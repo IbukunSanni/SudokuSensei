@@ -46,3 +46,5 @@ class Settings:
 
 # Global settings instance
 settings = Settings()
+
+# Auto-deployment test #2: Testing Vercel Git integration workflow
