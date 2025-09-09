@@ -14,15 +14,11 @@ SudokuSensei is a sophisticated educational Sudoku solver built with modern soft
 
 <div align="center">
 
-<video width="900" controls autoplay muted loop playsinline>
-  <source src="media/sudoku_demo.mp4" type="video/mp4">
-  <source src="media/sudoku_demo.webm" type="video/webm">
-  <!-- Fallback for browsers that don't support video -->
-  <img src="media/Sudoku_Sensei_Solve.gif" alt="SudokuSensei Demo" width="900" />
-  <p>Your browser does not support the video tag. <a href="media/sudoku_demo.mp4">Download the video</a> to view the demonstration.</p>
-</video>
+<img src="media/Sudoku_Sensei_Solve.gif" alt="SudokuSensei Demo" width="100%" style="max-width: 800px; height: auto;" />
 
 *Interactive solving demonstration with real-time validation and technique explanations*
+
+**🎬 [View High-Quality Video Demo](media/Sudoku_Sensei_Solve.mp4)**
 
 </div>
 
