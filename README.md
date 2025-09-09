@@ -1,4 +1,4 @@
-# SudokuSensei 🧩
+# SudokuSensei
 
 <div align="center">
 
@@ -8,7 +8,7 @@
 
 </div>
 
-## 🎯 Project Overview
+## Project Overview
 
 SudokuSensei is a sophisticated educational Sudoku solver built with modern software engineering practices. It demonstrates advanced algorithm implementation, clean architecture design, and full-stack development capabilities. The application provides step-by-step puzzle solving with detailed explanations of logical techniques applied.
 
@@ -18,11 +18,11 @@ SudokuSensei is a sophisticated educational Sudoku solver built with modern soft
 
 *Interactive solving demonstration with real-time validation and technique explanations*
 
-**🎬 [View High-Quality Video Demo](media/Sudoku_Sensei_Solve.mp4)**
+**[View High-Quality Video Demo](media/Sudoku_Sensei_Solve.mp4)**
 
 </div>
 
-## 🚀 Key Technical Highlights
+## Key Technical Highlights
 
 ### **Advanced Algorithm Implementation**
 - **Constraint Propagation**: Efficient candidate elimination using mathematical set operations
@@ -46,7 +46,7 @@ SudokuSensei is a sophisticated educational Sudoku solver built with modern soft
 - **API Design**: RESTful endpoints with OpenAPI documentation
 - **Real-time Updates**: Dynamic UI state management
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ```
 ┌─────────────────┐    HTTP/REST    ┌─────────────────┐
@@ -71,7 +71,7 @@ SudokuSensei is a sophisticated educational Sudoku solver built with modern soft
                                     └─────────────────┘
 ```
 
-## 🔧 Technology Stack
+## Technology Stack
 
 ### **Backend Technologies**
 - **Python 3.8+**: Core application logic and algorithms
@@ -92,7 +92,7 @@ SudokuSensei is a sophisticated educational Sudoku solver built with modern soft
 - **ESLint**: Code quality and style enforcement
 - **Virtual Environments**: Isolated Python dependencies
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.8 or higher
@@ -150,7 +150,7 @@ SudokuSensei is a sophisticated educational Sudoku solver built with modern soft
 
 4. **Access application**: Open [http://localhost:3000](http://localhost:3000)
 
-## 📚 API Documentation
+## API Documentation
 
 ### Core Endpoints
 
@@ -182,13 +182,13 @@ SudokuSensei is a sophisticated educational Sudoku solver built with modern soft
 }
 ```
 
-## 🧠 Algorithm Deep Dive
+## Algorithm Deep Dive
 
 ### **Constraint Satisfaction Problem (CSP) Approach**
 The solver treats Sudoku as a CSP with:
-- **Variables**: 81 cells in the 9×9 grid
+- **Variables**: 81 cells in the 9x9 grid
 - **Domain**: Numbers 1-9 for each cell
-- **Constraints**: Row, column, and 3×3 box uniqueness
+- **Constraints**: Row, column, and 3x3 box uniqueness
 
 ### **Solving Techniques Implemented**
 
@@ -204,7 +204,7 @@ The solver treats Sudoku as a CSP with:
 - **Early Termination**: Stop when no more logical moves available
 - **Memory Efficiency**: Bitwise operations for candidate tracking
 
-## 🧪 Testing & Quality Assurance
+## Testing & Quality Assurance
 
 ### **Test Coverage**
 - **Unit Tests**: Individual algorithm components
@@ -228,38 +228,38 @@ flake8 backend/  # Backend (if configured)
 npm run type-check  # Frontend TypeScript
 ```
 
-## 🎯 Skills Demonstrated
+## Skills Demonstrated
 
 ### **Relevant to Software Engineering Roles**
 
-✅ **Algorithm Design & Implementation**
+**Algorithm Design & Implementation**
 - Complex constraint satisfaction problems
 - Graph theory applications (Sudoku as constraint graph)
 - Optimization techniques and complexity analysis
 
-✅ **Python Ecosystem Expertise**
+**Python Ecosystem Expertise**
 - FastAPI for high-performance APIs
 - Pydantic for data validation
 - Object-oriented design patterns
 - Asynchronous programming concepts
 
-✅ **Full-Stack Development**
+**Full-Stack Development**
 - RESTful API design and implementation
 - Frontend-backend integration
 - State management and real-time updates
 
-✅ **Software Engineering Practices**
+**Software Engineering Practices**
 - Clean code architecture
 - Comprehensive error handling
 - Test-driven development
 - Git workflow and conventional commits
 
-✅ **Problem-Solving & Learning**
+**Problem-Solving & Learning**
 - Breaking down complex problems
 - Research and implementation of specialized algorithms
 - Performance optimization and profiling
 
-## 🔮 Future Enhancements
+## Future Enhancements
 
 - **Advanced Techniques**: Implement X-Wing, Swordfish, and other expert-level strategies
 - **Performance Monitoring**: Add metrics collection and performance dashboards
@@ -268,7 +268,7 @@ npm run type-check  # Frontend TypeScript
 - **Machine Learning**: Neural network approach for pattern recognition
 - **3D Visualization**: Advanced UI with solving animation
 
-## 📄 License
+## License
 
 This project is open source and available under the [MIT License](LICENSE).
 
@@ -276,7 +276,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 <div align="center">
 
-**Built with ❤️ for algorithmic problem solving and clean code**
+**Built for algorithmic problem solving and clean code**
 
 *Demonstrates proficiency in Python, algorithms, full-stack development, and software engineering best practices*
 
