@@ -11,6 +11,7 @@ from logic.naked_single import apply_all_naked_singles
 from logic.hidden_single import apply_all_hidden_singles
 from logic.hidden_pairs import apply_all_hidden_pairs
 from logic.naked_pairs import apply_all_naked_pairs
+from logic.naked_triples import apply_all_naked_triples
 from helpers.get_location import get_cell_location
 
 
@@ -26,8 +27,9 @@ class AdvancedSudokuSolver:
         self.techniques = [
             ("Naked Singles", apply_all_naked_singles),
             ("Hidden Singles", apply_all_hidden_singles),
-            ("Hidden Pairs", apply_all_hidden_pairs),
             ("Naked Pairs", apply_all_naked_pairs),
+            ("Hidden Pairs", apply_all_hidden_pairs),
+            ("Naked Triples", apply_all_naked_triples),
         ]
 
     def apply_basic_constraints(self, board: SudokuBoard) -> List[Dict]:
