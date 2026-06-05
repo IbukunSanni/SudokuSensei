@@ -19,7 +19,7 @@ A feature is **done** when:
 - [x] Box-Line Reduction
 - [x] Naked Triples
 - [x] Hidden Triples
-- [ ] X-Wing
+- [x] X-Wing
 - [ ] Swordfish
 
 ---
