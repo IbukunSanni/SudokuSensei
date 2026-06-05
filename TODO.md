@@ -29,5 +29,8 @@ A feature is **done** when:
 - [ ] Puzzle Generation — create puzzles with a guaranteed unique solution
 - [ ] Performance Monitoring — metrics and dashboards
 - [ ] Multi-threading — parallel puzzle solving
-- [ ] Machine Learning — neural network pattern recognition
+- [ ] Puzzle Image Ingestion — upload a photo of a Sudoku puzzle and have it parsed, solved, and explained step by step
+  - Grid detection & perspective correction (OpenCV or similar)
+  - Digit recognition via a tailored/custom-trained CNN (not a generic API call)
+  - Output: extracted grid fed directly into the solver pipeline
 - [ ] 3D Visualization — advanced solving animation
