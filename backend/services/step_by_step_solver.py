@@ -14,6 +14,8 @@ from logic.naked_triples import apply_one_naked_triple
 from logic.hidden_triples import apply_one_hidden_triple
 from logic.pointing_pairs import apply_one_pointing_pair
 from logic.box_line_reduction import apply_one_box_line_reduction
+from logic.x_wing import apply_one_x_wing
+from logic.x_wing import apply_one_x_wing
 from helpers.get_location import get_cell_location
 from config.settings import settings
 
@@ -40,6 +42,8 @@ class StepByStepSolver:
             ("Hidden Triple", apply_one_hidden_triple),
             ("Pointing Pairs", apply_one_pointing_pair),
             ("Box-Line Reduction", apply_one_box_line_reduction),
+            ("X-Wing", apply_one_x_wing),
+            ("X-Wing", apply_one_x_wing),
         ]
 
     def solve(self, puzzle: List[List[int]]) -> Dict[str, Any]:
