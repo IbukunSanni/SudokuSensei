@@ -15,7 +15,7 @@ A feature is **done** when:
 - [x] Hidden Singles
 - [x] Naked Pairs
 - [x] Hidden Pairs
-- [ ] Pointing Pairs / Triples
+- [x] Pointing Pairs / Triples
 - [ ] Box-Line Reduction
 - [x] Naked Triples
 - [x] Hidden Triples
