@@ -4,7 +4,7 @@ from helpers.get_location import get_cell_location
 
 
 def make_board_with_hidden_single_puzzle():
-    # Your puzzle, row by row—zeros are blanks:
+    # Your puzzle, row by row; zeros are blanks:
     grid = [
         [0, 0, 2, 1, 9, 3, 0, 0, 0],
         [0, 0, 0, 0, 0, 7, 0, 0, 0],
@@ -23,24 +23,27 @@ def make_board_with_hidden_single_puzzle():
 
 def test_hidden_single_on_given_puzzle():
     board = make_board_with_hidden_single_puzzle()
+
+    # Assert before state: D4 is unsolved and contains the hidden value 4.
+    r, c = 3, 3
+    assert not board.grid[r][c].is_solved()
+    assert board.grid[r][c].get_candidates() == {2, 4, 7, 9}
+
     changed, step = apply_one_hidden_single(board)
 
-    # It should find exactly one hidden single
     assert changed, "Expected apply_one_hidden_single to find a hidden single"
     assert step is not None
 
-    # The unique hidden single is at row 3, col 3 (0-indexed),
-    # and must be the digit 4
-    r, c = 3, 3
+    # Assert after state: D4 is solved with the hidden single value.
     assert board.grid[r][c].get_value() == 4
     assert board.grid[r][c].is_solved()
     assert board.grid[r][c].get_candidates() == set()
 
-    # The TechniqueStep should reference that cell and value
+    # Assert TechniqueStep details.
+    assert step.technique == "Hidden Single"
     assert step.value == 4
     assert step.focus_cells == [(r, c)]
 
-    # And the description should mention Hidden Single and the cell location
-    loc = get_cell_location(r, c)  # e.g. "D4"
+    loc = get_cell_location(r, c)
     assert "Hidden Single" in step.description
     assert f"cell {loc}" in step.description
