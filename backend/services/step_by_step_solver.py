@@ -11,6 +11,7 @@ from logic.hidden_single import apply_one_hidden_single
 from logic.hidden_pairs import apply_one_hidden_pair
 from logic.naked_pairs import apply_one_naked_pair
 from logic.naked_triples import apply_one_naked_triple
+from logic.hidden_triples import apply_one_hidden_triple
 from helpers.get_location import get_cell_location
 from config.settings import settings
 
@@ -34,6 +35,7 @@ class StepByStepSolver:
             ("Naked Pair", apply_one_naked_pair),
             ("Hidden Pair", apply_one_hidden_pair),
             ("Naked Triple", apply_one_naked_triple),
+            ("Hidden Triple", apply_one_hidden_triple),
         ]
 
     def solve(self, puzzle: List[List[int]]) -> Dict[str, Any]:
