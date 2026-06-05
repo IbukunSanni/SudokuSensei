@@ -13,6 +13,7 @@ from logic.naked_pairs import apply_all_naked_pairs
 from logic.naked_triples import apply_all_naked_triples
 from logic.hidden_triples import apply_all_hidden_triples
 from logic.pointing_pairs import apply_all_pointing_pairs
+from logic.box_line_reduction import apply_all_box_line_reductions
 from helpers.get_location import get_cell_location
 
 
@@ -33,6 +34,7 @@ class EnhancedSudokuSolver:
             ("Naked Triples", apply_all_naked_triples),
             ("Hidden Triples", apply_all_hidden_triples),
             ("Pointing Pairs", apply_all_pointing_pairs),
+            ("Box-Line Reduction", apply_all_box_line_reductions),
         ]
 
     def solve(self, puzzle: List[List[int]]) -> Dict[str, Any]:
