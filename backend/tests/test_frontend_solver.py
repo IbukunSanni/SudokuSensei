@@ -126,6 +126,7 @@ def test_step_by_step_solver():
     if result["is_solved"]:
         print_grid(result["solved_grid"], "Final Solution")
 
+    # TODO: replace return with assert statements (causes PytestReturnNotNoneWarning)
     return result
 
 
