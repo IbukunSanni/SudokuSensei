@@ -17,7 +17,7 @@ A feature is **done** when:
 - [x] Hidden Pairs
 - [ ] Pointing Pairs / Triples
 - [ ] Box-Line Reduction
-- [x] Naked Triples *(logic done — needs wiring into solver services)*
+- [x] Naked Triples
 - [ ] Hidden Triples
 - [ ] X-Wing
 - [ ] Swordfish
