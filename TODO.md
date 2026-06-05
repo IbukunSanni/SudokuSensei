@@ -18,7 +18,7 @@ A feature is **done** when:
 - [ ] Pointing Pairs / Triples
 - [ ] Box-Line Reduction
 - [x] Naked Triples
-- [ ] Hidden Triples
+- [x] Hidden Triples
 - [ ] X-Wing
 - [ ] Swordfish
 
