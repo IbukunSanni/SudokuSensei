@@ -12,6 +12,7 @@ from logic.hidden_pairs import apply_all_hidden_pairs
 from logic.naked_pairs import apply_all_naked_pairs
 from logic.naked_triples import apply_all_naked_triples
 from logic.hidden_triples import apply_all_hidden_triples
+from logic.pointing_pairs import apply_all_pointing_pairs
 from helpers.get_location import get_cell_location
 
 
@@ -31,6 +32,7 @@ class EnhancedSudokuSolver:
             ("Hidden Pairs", apply_all_hidden_pairs),
             ("Naked Triples", apply_all_naked_triples),
             ("Hidden Triples", apply_all_hidden_triples),
+            ("Pointing Pairs", apply_all_pointing_pairs),
         ]
 
     def solve(self, puzzle: List[List[int]]) -> Dict[str, Any]:
