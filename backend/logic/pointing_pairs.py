@@ -1,5 +1,6 @@
 from helpers.get_location import get_cell_location
 from models.technique_step import TechniqueStep
+from utils.unit_processor import process_boxes
 
 
 def apply_one_pointing_pair(board):
@@ -18,82 +19,84 @@ def apply_one_pointing_pair(board):
     """
     board.update_candidates()
 
-    for br in range(3):        # box row index (0-2)
-        for bc in range(3):    # box col index (0-2)
+    found_result = [None]
 
-            # Collect cells and positions for this box
-            box_cells = []
-            box_positions = []
-            for dr in range(3):
-                for dc in range(3):
-                    r = br * 3 + dr
-                    c = bc * 3 + dc
-                    box_cells.append(board.grid[r][c])
-                    box_positions.append((r, c))
+    def process_box(box_cells, box_positions):
+        if found_result[0] is not None:
+            return
 
-            for num in range(1, 10):
-                # Positions inside this box where num is a candidate
-                pointing_positions = [
-                    box_positions[i]
-                    for i, cell in enumerate(box_cells)
-                    if not cell.is_solved() and num in cell.get_candidates()
-                ]
+        br = box_positions[0][0] // 3
+        bc = box_positions[0][1] // 3
 
-                if len(pointing_positions) < 2:
-                    continue
+        for num in range(1, 10):
+            # Positions inside this box where num is a candidate
+            pointing_positions = [
+                box_positions[i]
+                for i, cell in enumerate(box_cells)
+                if not cell.is_solved() and num in cell.get_candidates()
+            ]
 
-                changed = False
-                focus_cells = list(pointing_positions)
-                elimination_map = {}
+            if len(pointing_positions) < 2:
+                continue
 
-                # --- Pointing via row ---
-                rows = {r for r, c in pointing_positions}
-                if len(rows) == 1:
-                    target_row = next(iter(rows))
-                    for col in range(9):
-                        if col // 3 == bc:   # skip cells inside the same box
-                            continue
-                        cell = board.grid[target_row][col]
-                        if not cell.is_solved() and num in cell.get_candidates():
-                            cands = cell.get_candidates()
-                            cell.set_candidates(cands - {num})
-                            elimination_map.setdefault(str(num), []).append(
-                                (target_row, col)
-                            )
-                            changed = True
+            changed = False
+            focus_cells = list(pointing_positions)
+            elimination_map = {}
 
-                # --- Pointing via column ---
-                cols = {c for r, c in pointing_positions}
-                if len(cols) == 1:
-                    target_col = next(iter(cols))
-                    for row in range(9):
-                        if row // 3 == br:   # skip cells inside the same box
-                            continue
-                        cell = board.grid[row][target_col]
-                        if not cell.is_solved() and num in cell.get_candidates():
-                            cands = cell.get_candidates()
-                            cell.set_candidates(cands - {num})
-                            elimination_map.setdefault(str(num), []).append(
-                                (row, target_col)
-                            )
-                            changed = True
+            # --- Pointing via row ---
+            rows = {r for r, c in pointing_positions}
+            if len(rows) == 1:
+                target_row = next(iter(rows))
+                for col in range(9):
+                    if col // 3 == bc:   # skip cells inside the same box
+                        continue
+                    cell = board.grid[target_row][col]
+                    if not cell.is_solved() and num in cell.get_candidates():
+                        cands = cell.get_candidates()
+                        cell.set_candidates(cands - {num})
+                        elimination_map.setdefault(str(num), []).append(
+                            (target_row, col)
+                        )
+                        changed = True
 
-                if changed:
-                    lines = []
-                    for cand, poses in elimination_map.items():
-                        locs = [get_cell_location(r, c) for (r, c) in poses]
-                        lines.append(f"Eliminated {cand} from {locs}")
-                    description = "Pointing Pairs/Triples elimination:\n" + "\n".join(lines)
-                    eliminations = [{k: v} for k, v in elimination_map.items()]
+            # --- Pointing via column ---
+            cols = {c for r, c in pointing_positions}
+            if len(cols) == 1:
+                target_col = next(iter(cols))
+                for row in range(9):
+                    if row // 3 == br:   # skip cells inside the same box
+                        continue
+                    cell = board.grid[row][target_col]
+                    if not cell.is_solved() and num in cell.get_candidates():
+                        cands = cell.get_candidates()
+                        cell.set_candidates(cands - {num})
+                        elimination_map.setdefault(str(num), []).append(
+                            (row, target_col)
+                        )
+                        changed = True
 
-                    step = TechniqueStep(
-                        technique="Pointing Pairs",
-                        description=description,
-                        focus_cells=focus_cells,
-                        value=None,
-                        eliminations=eliminations,
-                    )
-                    return True, step
+            if changed:
+                lines = []
+                for cand, poses in elimination_map.items():
+                    locs = [get_cell_location(r, c) for (r, c) in poses]
+                    lines.append(f"Eliminated {cand} from {locs}")
+                description = "Pointing Pairs/Triples elimination:\n" + "\n".join(lines)
+                eliminations = [{k: v} for k, v in elimination_map.items()]
+
+                step = TechniqueStep(
+                    technique="Pointing Pairs",
+                    description=description,
+                    focus_cells=focus_cells,
+                    value=None,
+                    eliminations=eliminations,
+                )
+                found_result[0] = (True, step)
+                return
+
+    process_boxes(board, process_box)
+
+    if found_result[0] is not None:
+        return found_result[0]
 
     return False, None
 
