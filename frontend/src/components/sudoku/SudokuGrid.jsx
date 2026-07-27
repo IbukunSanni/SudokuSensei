@@ -76,7 +76,9 @@ export default function SudokuGrid({
   isReadOnly = false,
   solvedGrid = null,
   isSolved = false,
-  techniqueHighlight = null
+  techniqueHighlight = null,
+  candidates = null,
+  showCandidates = false
 }) {
   const containerStyle = {
     display: "flex",
@@ -169,6 +171,9 @@ export default function SudokuGrid({
                   const isTechniqueFocus = techniqueHighlight?.focusCells?.some(
                     ([focusRow, focusCol]) => focusRow === rIdx && focusCol === cIdx
                   ) || false;
+                  const isElimination = techniqueHighlight?.eliminatedCells?.some(
+                    ([changeRow, changeCol]) => changeRow === rIdx && changeCol === cIdx
+                  ) || false;
 
                   // Check if this cell was solved by techniques (blue highlighting)
                   // Compares current state with original puzzle to identify solved cells
@@ -186,8 +191,10 @@ export default function SudokuGrid({
                       isDuplicate={isDuplicate}
                       isInAffectedUnit={isInAffectedUnit}
                       isTechniqueFocus={isTechniqueFocus}
-                      techniqueInfo={isTechniqueFocus ? techniqueHighlight : null}
                       wasSolved={wasSolved}
+                      isElimination={isElimination}
+                      candidates={candidates?.[rIdx]?.[cIdx] || []}
+                      showCandidates={showCandidates}
                     />
                   );
                 })

@@ -3,12 +3,31 @@ import axios from "axios";
 // API endpoint configuration
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL_IP ||
-  process.env.NEXT_PUBLIC_BACKEND_URL_LOCALHOST;
+  process.env.NEXT_PUBLIC_BACKEND_URL_LOCALHOST ||
+  "http://localhost:8000";
 
 /**
  * Service for API interactions
  */
 const apiService = {
+  /**
+   * Fetch candidate pencil marks without changing the puzzle.
+   */
+  getCandidates: async (puzzle) => {
+    try {
+      const response = await axios.post(`${BACKEND_URL}/candidates`, { puzzle });
+      return response.data;
+    } catch (error) {
+      const errorData = error.response?.data?.detail;
+      return {
+        error: true,
+        error_type: errorData?.error_type || "UNKNOWN_ERROR",
+        message: errorData?.message || error.message,
+        suggestions: errorData?.suggestions || [],
+      };
+    }
+  },
+
   /**
    * Sends the puzzle to the backend for complete solving
    *

@@ -2,7 +2,8 @@
 
 ## Solver
 
-- [ ] Add X-Wing and Swordfish solving techniques.
+- [x] Add X-Wing solving technique.
+- [ ] Add Swordfish solving technique.
 - [ ] Build a puzzle generator that guarantees a unique solution.
 - [ ] Benchmark and optimize solving performance for difficult puzzles.
 - [ ] Support parallel processing for batches of puzzles.
@@ -16,5 +17,6 @@
 ## Quality
 
 - [ ] Expand backend tests for advanced techniques and edge cases.
-- [ ] Add end-to-end tests for the frontend and API integration.
+- [x] Add API integration tests.
+- [ ] Add end-to-end browser tests for the frontend.
 - [ ] Document deployment, configuration, and troubleshooting steps.

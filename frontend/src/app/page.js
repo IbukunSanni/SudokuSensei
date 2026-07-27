@@ -28,6 +28,8 @@ export default function Page() {
   const [loading, setLoading] = useState(false); // Loading state for API calls
   const [currentStepIndex, setCurrentStepIndex] = useState(-1); // Current step in navigation (-1 = original)
   const [techniqueHighlight, setTechniqueHighlight] = useState(null); // Current technique highlighting info
+  const [candidateGrid, setCandidateGrid] = useState(null);
+  const [showCandidates, setShowCandidates] = useState(false);
 
   // Calculate highlighting information for the current puzzle
   const highlightInfo = getHighlightInfo(puzzle);
@@ -45,7 +47,31 @@ export default function Page() {
       const newGrid = puzzle.map((r) => [...r]);
       newGrid[row][col] = value === "" ? 0 : parseInt(value);
       setPuzzle(newGrid);
+      setCandidateGrid(null);
+      setShowCandidates(false);
+      setResult(null);
+      setCurrentStepIndex(-1);
+      setTechniqueHighlight(null);
     }
+  };
+
+  const toggleCandidates = async () => {
+    if (showCandidates) {
+      setShowCandidates(false);
+      return;
+    }
+
+    if (!candidateGrid) {
+      setLoading(true);
+      const candidateResult = await apiService.getCandidates(puzzle);
+      setLoading(false);
+      if (candidateResult.error) {
+        setResult(candidateResult);
+        return;
+      }
+      setCandidateGrid(candidateResult.candidates);
+    }
+    setShowCandidates(true);
   };
 
   /**
@@ -58,6 +84,9 @@ export default function Page() {
     setResult(result);
     setCurrentStepIndex(-1);
     setTechniqueHighlight(null);
+    setCandidateGrid(
+      result?.error ? null : result?.solving_steps?.[0]?.candidates || null
+    );
     setLoading(false);
   };
 
@@ -80,9 +109,11 @@ export default function Page() {
       const step = result.solving_steps[0];
       // Update puzzle with the new grid state
       setPuzzle(result.solved_grid);
+      setCandidateGrid(step.candidates || null);
       // Set technique highlighting for visual feedback
       setTechniqueHighlight({
         focusCells: step.focus_cells || [], // Cells to highlight in green
+        eliminatedCells: (step.candidate_changes || []).map(change => change.position),
         technique: step.technique, // Technique name (e.g., "Naked Single")
         description: step.description, // Human-readable explanation
         value: step.value // Value that was placed (if any)
@@ -115,8 +146,10 @@ export default function Page() {
     if (newIndex >= 0) {
       const step = steps[newIndex];
       setPuzzle(step.grid);
+      setCandidateGrid(step.candidates || null);
       setTechniqueHighlight({
         focusCells: step.focus_cells || [],
+        eliminatedCells: (step.candidate_changes || []).map(change => change.position),
         technique: step.technique,
         description: step.description,
         value: step.value
@@ -125,6 +158,7 @@ export default function Page() {
       // Back to original puzzle
       setPuzzle(originalPuzzle);
       setTechniqueHighlight(null);
+      setCandidateGrid(steps[0]?.candidates || null);
     }
   };
 
@@ -137,6 +171,8 @@ export default function Page() {
     setResult(null);
     setCurrentStepIndex(-1);
     setTechniqueHighlight(null);
+    setCandidateGrid(null);
+    setShowCandidates(false);
   };
 
   /**
@@ -148,6 +184,8 @@ export default function Page() {
     setResult(null);
     setCurrentStepIndex(-1);
     setTechniqueHighlight(null);
+    setCandidateGrid(null);
+    setShowCandidates(false);
   };
 
   const pageStyle = {
@@ -192,10 +230,27 @@ export default function Page() {
           highlightInfo={highlightInfo}
           onCellChange={handleChange}
           techniqueHighlight={techniqueHighlight}
+          candidates={candidateGrid}
+          showCandidates={showCandidates}
         />
 
         {/* Duplicate warning */}
         {highlightInfo.duplicates.size > 0 && <DuplicateWarning />}
+
+        <div style={{display: "flex", justifyContent: "center", marginBottom: "1rem"}}>
+          <ActionButton
+            text={
+              loading
+                ? "Loading Candidates..."
+                : showCandidates
+                  ? "Hide Candidates"
+                  : "Show Candidates"
+            }
+            color="gray"
+            onClick={toggleCandidates}
+            disabled={loading}
+          />
+        </div>
 
         {/* Action buttons */}
         <div style={buttonContainerStyle}>
@@ -260,6 +315,18 @@ export default function Page() {
             <p style={{margin: "0", fontSize: "0.9rem", color: "#666"}}>
               {techniqueHighlight.description}
             </p>
+            <div style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "1rem",
+              marginTop: "0.75rem",
+              fontSize: "0.8rem",
+              color: "#555"
+            }}>
+              <span><span style={{color: "#2e7d32"}}>■</span> Pattern cells</span>
+              <span><span style={{color: "#ef6c00"}}>■</span> Candidate removed</span>
+              <span><span style={{color: "#1565c0"}}>■</span> Solved cell</span>
+            </div>
             {techniqueHighlight.value && (
               <p style={{margin: "0.5rem 0 0 0", fontWeight: "bold", color: "#333"}}>
                 Value: {techniqueHighlight.value}

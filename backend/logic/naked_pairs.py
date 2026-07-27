@@ -22,6 +22,11 @@ def apply_one_naked_pair(board):
 
     def process_unit(cells, positions):
         nonlocal changed, focus_cells, elimination_map
+        # This function implements one educational step. Once a pair has
+        # produced eliminations, do not fold eliminations from later units
+        # into the same TechniqueStep.
+        if changed:
+            return
         # Find all cells with exactly 2 candidates
         pairs = {}
         for idx, cell in enumerate(cells):
@@ -45,9 +50,9 @@ def apply_one_naked_pair(board):
                             pos = positions[idx]
                             for v in old - new:
                                 elimination_map.setdefault(str(v), []).append(pos)
-                # Mark the pair cells for focus/highlight
-                for idx in idxs:
-                    focus_cells.append(positions[idx])
+                if changed:
+                    focus_cells = [positions[idx] for idx in idxs]
+                    return
 
     # Process all units using shared utility
     process_all_units(board, process_unit)
