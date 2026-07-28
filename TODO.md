@@ -128,6 +128,8 @@ Milestone acceptance criteria:
 - [x] Separate backend runtime and test dependencies for fresh CI environments.
 - [x] Document environment variables, release order, smoke testing, and rollback.
 - [x] Add a repeatable production smoke-test script.
+- [x] Upgrade the frontend to the current Next.js active-LTS security release
+      after Vercel rejected the vulnerable framework version.
 - [ ] Deploy and verify the backend production health contract.
 - [ ] Deploy and verify the frontend-to-backend solving journey.
 - [ ] Confirm CI passes on the synchronized GitHub branch.
