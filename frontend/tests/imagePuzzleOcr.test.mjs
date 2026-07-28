@@ -1,39 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mapOcrSymbolsToGrid } from "../src/utils/imagePuzzleOcr.mjs";
+import { mapRecognizedSymbols } from "../src/utils/imagePuzzleOcr.mjs";
 
-test("maps recognized digit centers into Sudoku cells", () => {
-  const result = mapOcrSymbolsToGrid(
+test("maps normalized sheet symbols only into expected nonblank cells", () => {
+  const result = mapRecognizedSymbols(
     [
-      { digit: 5, confidence: 92, bbox: { x0: 1, y0: 1, x1: 9, y1: 9 } },
-      { digit: 9, confidence: 81, bbox: { x0: 81, y0: 81, x1: 89, y1: 89 } },
+      { digit: 5, confidence: 92, bbox: { x0: 8, y0: 8, x1: 56, y1: 56 } },
+      { digit: 9, confidence: 88, bbox: { x0: 520, y0: 520, x1: 568, y1: 568 } },
+      { digit: 3, confidence: 99, bbox: { x0: 72, y0: 8, x1: 120, y1: 56 } },
     ],
-    90,
-    90
+    [{ row: 0, col: 0 }, { row: 8, col: 8 }]
   );
 
   assert.equal(result.grid[0][0], 5);
-  assert.equal(result.confidence[0][0], 92);
   assert.equal(result.grid[8][8], 9);
+  assert.equal(result.grid[0][1], 0);
 });
 
-test("keeps the highest-confidence digit when OCR overlaps a cell", () => {
-  const result = mapOcrSymbolsToGrid(
-    [
-      { digit: 2, confidence: 40, bbox: { x0: 1, y0: 1, x1: 5, y1: 5 } },
-      { digit: 7, confidence: 90, bbox: { x0: 2, y0: 2, x1: 6, y1: 6 } },
-    ],
-    90,
-    90
-  );
-
-  assert.equal(result.grid[0][0], 7);
-  assert.equal(result.confidence[0][0], 90);
-});
-
-test("rejects missing image dimensions", () => {
-  assert.throws(
-    () => mapOcrSymbolsToGrid([], 0, 90),
-    /dimensions could not be read/
-  );
+test("marks expected cells missing from OCR as uncertain", () => {
+  const result = mapRecognizedSymbols([], [{ row: 2, col: 4 }]);
+  assert.equal(result.grid[2][4], 0);
+  assert.equal(result.confidence[2][4], 0);
 });

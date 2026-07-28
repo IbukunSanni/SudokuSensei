@@ -1,18 +1,38 @@
 .container {
   max-width: 31rem;
   margin: 0 auto 1.5rem;
-  padding: 1rem;
   border: 1px solid #dbe3ec;
   border-radius: 0.6rem;
   background: #f8fafc;
+  overflow: hidden;
   text-align: left;
 }
 
-.heading,
 .review h3 {
   margin: 0 0 0.4rem;
   color: #1e293b;
   font-size: 1rem;
+}
+
+.toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 0;
+  background: #eef4fa;
+  color: #234;
+  font-weight: 700;
+}
+
+.toggle:hover {
+  background: #e4edf6;
+}
+
+.panel {
+  padding: 1rem;
 }
 
 .help {

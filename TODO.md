@@ -25,7 +25,7 @@ feature that needs it, rather than delaying the product roadmap indefinitely.
    renderer-independent teaching timelines after the preceding product flows
    are stable.
 
-### Currently in progress - OCR/image import
+### Priority 1 status - OCR/image import
 
 - [x] Choose on-device OCR as the first implementation so images are not uploaded.
 - [x] Add file-picker and mobile-camera image acquisition.
@@ -35,16 +35,38 @@ feature that needs it, rather than delaying the product roadmap indefinitely.
 - [x] Highlight uncertain/conflicting cells and require correction before import.
 - [x] Validate reviewed clues before enabling import.
 - [x] Add deterministic OCR-to-grid mapping tests.
-- [ ] Add integration tests and a versioned image fixture set.
-- [ ] Measure whole-puzzle accuracy and processing latency on that fixture set.
+- [x] Add a versioned clean-grid image fixture and verify it through the browser.
+- [x] Measure the clean baseline: 30/30 clues and 51/51 blanks recognized in
+      approximately 46 seconds on the development machine.
+- [ ] Add automated browser integration tests for image review and import.
+- [ ] Expand the fixture set to perspective, shadow, blur, handwriting, and
+      partial-crop cases before treating the clean baseline as an accuracy claim.
 
-Immediate next slice: file/mobile-camera acquisition, local OCR, and the
-editable review grid. Drag/drop, clipboard, preprocessing, and accuracy
-measurement follow in the next slice.
+Core OCR flow is complete. Drag/drop, clipboard input, a Web Worker, broader
+fixtures, and latency optimization remain as hardening work.
+
+### Priority 2 status - Swordfish
+
+- [x] Detect row-oriented Swordfish patterns.
+- [x] Detect column-oriented Swordfish patterns.
+- [x] Reject four-cover near misses and patterns with no eliminations.
+- [x] Emit focus cells, base/cover metadata, explanations, and canonical
+      before/after candidate changes.
+- [x] Add positive, negative, replay-contract, and solver-registry tests.
+
+### Currently next - Batch processing
+
+- [ ] Define a bounded batch request/response contract with per-puzzle results.
+- [ ] Add a sequential backend batch endpoint reusing the production solver.
+- [ ] Isolate invalid or failed puzzles so one item cannot fail the whole batch.
+- [ ] Add batch size limits, timing metadata, and deterministic API tests.
+- [ ] Add paste/file batch input and a results summary in the frontend.
+- [ ] Benchmark representative batches before choosing a concurrency model.
 
 ## Current capabilities
 
-- [x] Solve with Naked/Hidden Singles, Naked/Hidden Pairs, Naked Triples, and X-Wing.
+- [x] Solve with Naked/Hidden Singles, Naked/Hidden Pairs, Naked Triples, X-Wing,
+      and Swordfish.
 - [x] Validate puzzle format, solvability, and solution uniqueness.
 - [x] Expose full-solve, single-step, health, and candidate APIs.
 - [x] Display candidates and identify candidates removed by a solving step.
@@ -176,8 +198,8 @@ Acceptance criteria:
 - [ ] Benchmark easy, hard, expert, invalid, and non-unique puzzle datasets.
 - [ ] Record technique runtime, iteration count, allocations, and candidate changes.
 - [ ] Document time/space complexity and correctness reasoning for each technique.
-- [ ] Add Swordfish only after X-Wing has complete positive, negative, and
-      invariant tests.
+- [x] Add Swordfish with row/column positive cases, near-miss and no-elimination
+      negative cases, replayable candidate changes, explanation, and renderer metadata.
 - [ ] Build a puzzle generator that proves uniqueness and grades difficulty from
       the logical techniques required.
 
@@ -221,14 +243,14 @@ Acceptance criteria:
 - [x] First add paste/import for common 81-character and nine-line puzzle formats;
       this is the cheapest high-reliability alternative to manual cell entry.
 - [ ] Add drag-and-drop, file-picker, clipboard-paste, and mobile camera inputs.
-- [ ] Define an image-import pipeline with explicit stages: decode, orient, crop,
+- [x] Define an image-import pipeline with explicit stages: decode, orient, crop,
       detect grid, perspective-correct, split 81 cells, recognize digits, validate,
       and review.
-- [ ] Use computer vision to detect the outer quadrilateral and apply a perspective
+- [x] Use computer vision to detect the outer quadrilateral and apply a perspective
       transform before attempting digit recognition.
-- [ ] Remove grid lines and normalize each cell with grayscale, adaptive thresholding,
+- [x] Remove grid lines and normalize each cell with grayscale, adaptive thresholding,
       centering, and consistent padding.
-- [ ] Establish a simple OCR baseline, but measure it on Sudoku images rather than
+- [x] Establish a simple OCR baseline, but measure it on Sudoku images rather than
       assuming general document OCR will be accurate enough.
 - [ ] Evaluate a small digit classifier exported to ONNX for recognizing only
       `blank` and digits `1-9`; run inference locally in the browser when practical.

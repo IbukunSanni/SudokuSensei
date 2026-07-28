@@ -12,6 +12,7 @@ from logic.hidden_pairs import apply_one_hidden_pair
 from logic.naked_pairs import apply_one_naked_pair
 from logic.naked_triples import apply_one_naked_triple
 from logic.x_wing import apply_one_x_wing
+from logic.swordfish import apply_one_swordfish
 from helpers.get_location import get_cell_location
 from config.settings import settings
 from models.technique_step import CandidateChange
@@ -37,6 +38,7 @@ class StepByStepSolver:
             ("Hidden Pair", apply_one_hidden_pair),
             ("Naked Triple", apply_one_naked_triple),
             ("X-Wing", apply_one_x_wing),
+            ("Swordfish", apply_one_swordfish),
         ]
 
     def get_candidates(self, puzzle: List[List[int]]) -> List[List[List[int]]]:
@@ -97,6 +99,7 @@ class StepByStepSolver:
                 "solved_positions": solved_positions,
                 "focus_cells": technique_step.focus_cells,
                 "value": technique_step.value,
+                "extra": technique_step.extra,
                 "explanation": self._get_technique_explanation(technique_name),
             }
             return {
@@ -221,6 +224,7 @@ class StepByStepSolver:
                         "solved_positions": solved_positions,
                         "focus_cells": technique_step.focus_cells,
                         "value": technique_step.value,
+                        "extra": technique_step.extra,
                         "explanation": self._get_technique_explanation(technique_name),
                     }
 
@@ -335,6 +339,7 @@ class StepByStepSolver:
             "Naked Pair": "When two cells in a unit contain the same two candidates, those candidates can be eliminated from other cells in that unit",
             "Naked Triple": "When three cells in a unit contain the same three candidates between them, those candidates can be eliminated from other cells in that unit",
             "X-Wing": "When a candidate occupies the same two columns in two rows, or the same two rows in two columns, it can be removed from the remaining cells in those cover units",
+            "Swordfish": "When a candidate in three rows is restricted to the same three columns, or vice versa, it can be removed from the remaining cells in those cover units",
         }
         return explanations.get(
             technique_name, f"Applied {technique_name} solving technique"

@@ -65,3 +65,10 @@ def test_solve_step_rejects_conflicting_clues():
     response = client.post("/solve-step", json={"puzzle": invalid})
     assert response.status_code == 422
     assert response.json()["detail"]["error_type"] == "NO_SOLUTION"
+
+
+def test_solver_advertises_swordfish_after_x_wing():
+    from services.step_by_step_solver import step_by_step_solver
+
+    techniques = step_by_step_solver.get_available_techniques()
+    assert techniques[-2:] == ["X-Wing", "Swordfish"]

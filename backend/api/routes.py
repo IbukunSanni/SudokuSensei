@@ -5,7 +5,7 @@ Provides endpoints for solving Sudoku puzzles and health checks.
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Import services
 from models.technique_step import CandidateChange
@@ -59,6 +59,9 @@ class SolvingStep(BaseModel):
     step_number: Optional[int] = Field(None, description="Sequence number")
     value: Optional[int] = Field(None, description="Value placed by this step")
     explanation: Optional[str] = Field(None, description="Educational explanation")
+    extra: Optional[Dict[str, Any]] = Field(
+        None, description="Technique metadata used by generic teaching renderers"
+    )
 
 
 class SolveResponse(BaseModel):

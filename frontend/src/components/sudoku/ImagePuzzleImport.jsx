@@ -15,6 +15,7 @@ export default function ImagePuzzleImport({ onImport }) {
   const [confidence, setConfidence] = useState(null);
   const [progress, setProgress] = useState(null);
   const [error, setError] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const recognize = async (file) => {
     if (!file?.type.startsWith("image/")) {
@@ -33,13 +34,11 @@ export default function ImagePuzzleImport({ onImport }) {
     setProgress(0);
 
     try {
-      const bitmap = await createImageBitmap(file);
       const result = await recognizeSudokuImage(
         file,
-        { width: bitmap.width, height: bitmap.height },
+        null,
         setProgress
       );
-      bitmap.close();
       setReviewGrid(result.grid);
       setConfidence(result.confidence);
     } catch (recognitionError) {
@@ -88,80 +87,96 @@ export default function ImagePuzzleImport({ onImport }) {
 
   return (
     <section className={styles.container}>
-      <h2 className={styles.heading}>Import from an image</h2>
-      <p className={styles.help}>
-        Images are recognized in your browser and are not uploaded. For this
-        first baseline, crop the image closely around a straight 9×9 grid.
-      </p>
-      <input
-        ref={inputRef}
-        className={styles.hiddenInput}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={(event) => recognize(event.target.files?.[0])}
-      />
       <button
         type="button"
-        className={styles.pickButton}
-        disabled={progress !== null}
-        onClick={() => inputRef.current?.click()}
+        className={styles.toggle}
+        aria-expanded={isOpen}
+        aria-controls="image-puzzle-import-panel"
+        onClick={() => setIsOpen((open) => !open)}
       >
-        {progress === null ? "Choose or take a photo" : `Recognizing… ${progress}%`}
+        <span>Import from an image</span>
+        <span aria-hidden="true">{isOpen ? "−" : "+"}</span>
       </button>
 
-      {previewUrl && (
-        <img className={styles.preview} src={previewUrl} alt="Selected Sudoku" />
-      )}
-
-      {error && <p className={styles.error} role="alert">{error}</p>}
-
-      {reviewGrid && (
-        <div className={styles.review}>
-          <h3>Review every clue</h3>
+      {isOpen && (
+        <div id="image-puzzle-import-panel" className={styles.panel}>
           <p className={styles.help}>
-            {clueCount} clues found. Correct highlighted cells before importing.
+            Images are recognized in your browser and are not uploaded. The grid is
+            detected, straightened, split into cells, and then reviewed by you.
           </p>
-          <div className={styles.grid} aria-label="Recognized puzzle review grid">
-            {reviewGrid.flatMap((row, rowIndex) =>
-              row.map((value, colIndex) => {
-                const key = `${rowIndex}-${colIndex}`;
-                const uncertain =
-                  confidence?.[rowIndex]?.[colIndex] !== null &&
-                  confidence?.[rowIndex]?.[colIndex] < 70;
-                return (
-                  <input
-                    key={key}
-                    aria-label={`Row ${rowIndex + 1}, column ${colIndex + 1}`}
-                    className={`${styles.cell} ${
-                      duplicates.has(key) || uncertain ? styles.needsReview : ""
-                    }`}
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={value || ""}
-                    onChange={(event) =>
-                      updateCell(rowIndex, colIndex, event.target.value)
-                    }
-                  />
-                );
-              })
-            )}
-          </div>
-          {(duplicates.size > 0 || uncertainCount > 0) && (
-            <p className={styles.warning} role="status">
-              Resolve {duplicates.size > 0 ? "duplicate clues" : ""}
-              {duplicates.size > 0 && uncertainCount > 0 ? " and " : ""}
-              {uncertainCount > 0 ? `${uncertainCount} uncertain cells` : ""}.
-            </p>
-          )}
+          <input
+            ref={inputRef}
+            className={styles.hiddenInput}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(event) => recognize(event.target.files?.[0])}
+          />
           <button
             type="button"
-            className={styles.importButton}
-            disabled={!canImport}
-            onClick={() => onImport(reviewGrid)}
+            className={styles.pickButton}
+            disabled={progress !== null}
+            onClick={() => inputRef.current?.click()}
           >
-            Import reviewed puzzle
+            {progress === null
+              ? "Choose or take a photo"
+              : `Recognizing… ${progress}%`}
           </button>
+
+          {previewUrl && (
+            <img className={styles.preview} src={previewUrl} alt="Selected Sudoku" />
+          )}
+
+          {error && <p className={styles.error} role="alert">{error}</p>}
+
+          {reviewGrid && (
+            <div className={styles.review}>
+              <h3>Review every clue</h3>
+              <p className={styles.help}>
+                {clueCount} clues found. Correct highlighted cells before importing.
+              </p>
+              <div className={styles.grid} aria-label="Recognized puzzle review grid">
+                {reviewGrid.flatMap((row, rowIndex) =>
+                  row.map((value, colIndex) => {
+                    const key = `${rowIndex}-${colIndex}`;
+                    const uncertain =
+                      confidence?.[rowIndex]?.[colIndex] !== null &&
+                      confidence?.[rowIndex]?.[colIndex] < 70;
+                    return (
+                      <input
+                        key={key}
+                        aria-label={`Row ${rowIndex + 1}, column ${colIndex + 1}`}
+                        className={`${styles.cell} ${
+                          duplicates.has(key) || uncertain ? styles.needsReview : ""
+                        }`}
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={value || ""}
+                        onChange={(event) =>
+                          updateCell(rowIndex, colIndex, event.target.value)
+                        }
+                      />
+                    );
+                  })
+                )}
+              </div>
+              {(duplicates.size > 0 || uncertainCount > 0) && (
+                <p className={styles.warning} role="status">
+                  Resolve {duplicates.size > 0 ? "duplicate clues" : ""}
+                  {duplicates.size > 0 && uncertainCount > 0 ? " and " : ""}
+                  {uncertainCount > 0 ? `${uncertainCount} uncertain cells` : ""}.
+                </p>
+              )}
+              <button
+                type="button"
+                className={styles.importButton}
+                disabled={!canImport}
+                onClick={() => onImport(reviewGrid)}
+              >
+                Import reviewed puzzle
+              </button>
+            </div>
+          )}
         </div>
       )}
     </section>

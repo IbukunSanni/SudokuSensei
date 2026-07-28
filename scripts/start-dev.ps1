@@ -12,12 +12,14 @@ $frontendCommand = "cd /d `"$frontendDirectory`" && call start-dev.bat"
 
 $backendProcess = Start-Process `
     -FilePath "cmd.exe" `
-    -ArgumentList "/k", $backendCommand `
+    -ArgumentList "/c", $backendCommand `
+    -WindowStyle Hidden `
     -PassThru
 
 $frontendProcess = Start-Process `
     -FilePath "cmd.exe" `
-    -ArgumentList "/k", $frontendCommand `
+    -ArgumentList "/c", $frontendCommand `
+    -WindowStyle Hidden `
     -PassThru
 
 @(

@@ -20,7 +20,9 @@ export function getSudokuCellStyle(
   isInAffectedUnit = false,
   isTechniqueFocus = false,
   wasSolved = false,
-  isElimination = false
+  isElimination = false,
+  isActiveCell = false,
+  isInActiveUnit = false
 ) {
   // Base styling for all cells
   const baseStyle = {
@@ -68,13 +70,24 @@ export function getSudokuCellStyle(
     baseStyle.color = "#ef6c00";
     baseStyle.boxShadow = "inset 0 0 0 2px #ff9800";
   }
-  // 4. SOLVED CELLS - Blue highlighting
+  // 4. ACTIVE CELL - Strong selection highlight
+  else if (isActiveCell) {
+    baseStyle.backgroundColor = "#dbeafe";
+    baseStyle.color = "#0f4c81";
+    baseStyle.boxShadow = "inset 0 0 0 3px #2563eb";
+  }
+  // 5. ACTIVE ROW, COLUMN, OR BOX - Context highlight
+  else if (isInActiveUnit) {
+    baseStyle.backgroundColor = "#eff6ff";
+    baseStyle.color = "#1e3a5f";
+  }
+  // 6. SOLVED CELLS - Blue highlighting
   else if (wasSolved) {
     baseStyle.backgroundColor = isInput ? "#e3f2fd" : "#bbdefb";
     baseStyle.color = "#1565c0";
     baseStyle.fontWeight = "bold";
   }
-  // 5. AFFECTED UNITS - Yellow highlighting (lowest priority)
+  // 7. AFFECTED UNITS - Yellow highlighting
   // Shows rows/columns/boxes that contain duplicate values
   else if (isInAffectedUnit) {
     baseStyle.backgroundColor = isInput ? "#fffde7" : "#fff9c4";
@@ -124,6 +137,10 @@ export default function SudokuCell({
   isTechniqueFocus = false,
   wasSolved = false,
   isElimination = false,
+  isActiveCell = false,
+  isInActiveUnit = false,
+  onHoverChange = () => {},
+  onFocusChange = () => {},
   candidates = [],
   showCandidates = false,
   removedCandidates = []
@@ -136,7 +153,9 @@ export default function SudokuCell({
     isInAffectedUnit,
     isTechniqueFocus,
     wasSolved,
-    isElimination
+    isElimination,
+    isActiveCell,
+    isInActiveUnit
   );
 
   const displayCandidates =
@@ -150,6 +169,10 @@ export default function SudokuCell({
         maxLength={1}
         value={value === 0 ? "" : value}
         onChange={(e) => onChange(rowIdx, colIdx, e.target.value)}
+        onMouseEnter={() => onHoverChange(true)}
+        onMouseLeave={() => onHoverChange(false)}
+        onFocus={() => onFocusChange(true)}
+        onBlur={() => onFocusChange(false)}
         style={cellStyle}
       />
     );
@@ -186,7 +209,11 @@ export default function SudokuCell({
   };
 
   return (
-    <div style={{...cellStyle, position: "relative", padding: 0}}>
+    <div
+      style={{...cellStyle, position: "relative", padding: 0}}
+      onMouseEnter={() => onHoverChange(true)}
+      onMouseLeave={() => onHoverChange(false)}
+    >
       <div style={candidateStyle} aria-hidden="true">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((candidate) => (
           <span
@@ -226,6 +253,8 @@ export default function SudokuCell({
         maxLength={1}
         value=""
         onChange={(e) => onChange(rowIdx, colIdx, e.target.value)}
+        onFocus={() => onFocusChange(true)}
+        onBlur={() => onFocusChange(false)}
         style={inputStyle}
       />
     </div>
