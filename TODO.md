@@ -125,6 +125,7 @@ Milestone acceptance criteria:
 - [x] Replace wildcard credentialed CORS with explicit production and preview origins.
 - [x] Add request IDs, server timing, and baseline response security headers.
 - [x] Add CI for backend tests and frontend tests, lint, and production build.
+- [x] Separate backend runtime and test dependencies for fresh CI environments.
 - [x] Document environment variables, release order, smoke testing, and rollback.
 - [x] Add a repeatable production smoke-test script.
 - [ ] Deploy and verify the backend production health contract.

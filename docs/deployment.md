@@ -48,6 +48,13 @@ regular expression. Override `CORS_ORIGIN_REGEX` if the project name changes.
 node scripts/smoke-production.mjs
 ```
 
+For a fresh backend development/test environment, install the declared
+development dependencies:
+
+```powershell
+pip install -r backend/requirements-dev.txt
+```
+
 Override URLs for previews:
 
 ```powershell
