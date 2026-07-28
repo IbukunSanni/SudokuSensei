@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Tuple
 
 # Import services
+from models.technique_step import CandidateChange
 from services.step_by_step_solver import step_by_step_solver
 from services.validation_service import (
     is_valid_format,
@@ -26,18 +27,6 @@ class PuzzleInput(BaseModel):
         ...,
         description="9x9 Sudoku grid with 0 for empty cells and 1-9 for filled cells",
     )
-
-
-class CandidateChange(BaseModel):
-    """Model for a change in candidates for a cell"""
-
-    position: Tuple[int, int] = Field(
-        ..., description="Row and column indices of the cell"
-    )
-    location: str = Field(..., description="Human-readable location (e.g., 'R1C2')")
-    eliminated: List[int] = Field(..., description="Candidates that were eliminated")
-    old_candidates: List[int] = Field(..., description="Candidates before the change")
-    new_candidates: List[int] = Field(..., description="Candidates after the change")
 
 
 class SolvingStep(BaseModel):

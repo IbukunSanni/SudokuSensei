@@ -14,6 +14,7 @@ from logic.naked_triples import apply_one_naked_triple
 from logic.x_wing import apply_one_x_wing
 from helpers.get_location import get_cell_location
 from config.settings import settings
+from models.technique_step import CandidateChange
 
 
 class StepByStepSolver:
@@ -54,6 +55,7 @@ class StepByStepSolver:
 
         for technique_name, technique_func in self.techniques:
             before_grid = [[cell.get_value() for cell in row] for row in board.grid]
+            before_candidates = board.get_candidates_grid()
             changed, technique_step = technique_func(board)
             if not changed or not technique_step:
                 continue
@@ -73,17 +75,25 @@ class StepByStepSolver:
             if cells_solved:
                 board.update_candidates()
 
-            candidate_changes = self._format_eliminations(technique_step.eliminations)
+            after_candidates = board.get_candidates_grid()
+            candidate_changes = self.derive_candidate_changes(
+                before_grid,
+                after_grid,
+                before_candidates,
+                after_candidates,
+            )
             step = {
                 "step_type": "technique",
                 "step_number": 1,
                 "grid": after_grid,
-                "candidates": board.get_candidates_grid(),
+                "candidates": after_candidates,
                 "technique": technique_step.technique,
                 "description": technique_step.description,
                 "cells_solved": cells_solved,
-                "candidates_eliminated": len(candidate_changes),
-                "candidate_changes": candidate_changes,
+                "candidates_eliminated": self._count_eliminations(candidate_changes),
+                "candidate_changes": [
+                    change.model_dump() for change in candidate_changes
+                ],
                 "solved_positions": solved_positions,
                 "focus_cells": technique_step.focus_cells,
                 "value": technique_step.value,
@@ -186,11 +196,12 @@ class StepByStepSolver:
                                     f"{get_cell_location(r, c)}={after_grid[r][c]}"
                                 )
 
-                    # Count candidate eliminations
-                    eliminations_count = 0
-                    for elimination in technique_step.eliminations:
-                        for positions in elimination.values():
-                            eliminations_count += len(positions)
+                    candidate_changes = self.derive_candidate_changes(
+                        before_grid,
+                        after_grid,
+                        before_candidates,
+                        after_candidates,
+                    )
 
                     # Create solving step from TechniqueStep
                     solving_step = {
@@ -201,10 +212,12 @@ class StepByStepSolver:
                         "technique": technique_step.technique,
                         "description": f"Step {step_number}: {technique_step.description}",
                         "cells_solved": cells_solved,
-                        "candidates_eliminated": eliminations_count,
-                        "candidate_changes": self._format_eliminations(
-                            technique_step.eliminations
+                        "candidates_eliminated": self._count_eliminations(
+                            candidate_changes
                         ),
+                        "candidate_changes": [
+                            change.model_dump() for change in candidate_changes
+                        ],
                         "solved_positions": solved_positions,
                         "focus_cells": technique_step.focus_cells,
                         "value": technique_step.value,
@@ -266,43 +279,52 @@ class StepByStepSolver:
             "technique": "Constraint Propagation",
             "description": description,
             "cells_solved": 0,
-            "candidates_eliminated": len(constraint_changes),
+            "candidates_eliminated": sum(
+                len(change["eliminated"]) for change in constraint_changes
+            ),
             "candidate_changes": self._format_constraint_changes(constraint_changes),
             "solved_positions": solved_positions or [],
             "explanation": "Removed candidates that conflict with filled cells in their rows, columns, and boxes",
         }
 
-    def _format_eliminations(self, eliminations: List[Dict]) -> List[Dict]:
-        """Format eliminations from TechniqueStep into API format."""
-        formatted = []
-        for elimination in eliminations:
-            for candidate, positions in elimination.items():
-                for pos in positions:
-                    formatted.append(
-                        {
-                            "position": pos,
-                            "location": get_cell_location(pos[0], pos[1]),
-                            "eliminated": [int(candidate)],
-                            "old_candidates": [],  # Would need to track this separately
-                            "new_candidates": [],  # Would need to track this separately
-                        }
+    @staticmethod
+    def derive_candidate_changes(
+        before_grid: List[List[int]],
+        after_grid: List[List[int]],
+        before_candidates: List[List[set[int]]],
+        after_candidates: List[List[set[int]]],
+    ) -> List[CandidateChange]:
+        """Derive canonical candidate changes from real board snapshots."""
+        changes = []
+        for row in range(9):
+            for col in range(9):
+                # A placement is represented by the grid/value fields, not as if
+                # all candidates were eliminated from the newly solved cell.
+                if before_grid[row][col] == 0 and after_grid[row][col] != 0:
+                    continue
+
+                old = before_candidates[row][col]
+                new = after_candidates[row][col]
+                if old - new:
+                    changes.append(
+                        CandidateChange.from_sets((row, col), old, new)
                     )
-        return formatted
+        return changes
+
+    @staticmethod
+    def _count_eliminations(changes: List[CandidateChange]) -> int:
+        return sum(len(change.eliminated) for change in changes)
 
     def _format_constraint_changes(self, constraint_changes: List[Dict]) -> List[Dict]:
         """Format constraint propagation changes."""
-        formatted = []
-        for change in constraint_changes:
-            formatted.append(
-                {
-                    "position": change["position"],
-                    "location": change["location"],
-                    "eliminated": list(change["eliminated"]),
-                    "old_candidates": list(change["old_candidates"]),
-                    "new_candidates": list(change["new_candidates"]),
-                }
-            )
-        return formatted
+        return [
+            CandidateChange.from_sets(
+                change["position"],
+                change["old_candidates"],
+                change["new_candidates"],
+            ).model_dump()
+            for change in constraint_changes
+        ]
 
     def _get_technique_explanation(self, technique_name: str) -> str:
         """Get educational explanation for each technique."""

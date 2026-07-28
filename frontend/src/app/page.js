@@ -3,6 +3,7 @@
 import { useState } from "react";
 import SudokuGrid from "@/components/sudoku/SudokuGrid";
 import DuplicateWarning from "@/components/sudoku/DuplicateWarning";
+import ImagePuzzleImport from "@/components/sudoku/ImagePuzzleImport";
 import PuzzleImport from "@/components/sudoku/PuzzleImport";
 import ResultDisplay from "@/components/sudoku/ResultDisplay";
 import ActionButton from "@/components/ui/ActionButton";
@@ -237,6 +238,7 @@ export default function Page() {
         <h1 style={titleStyle}>SudokuSensei</h1>
 
         <PuzzleImport onImport={loadPuzzle} />
+        <ImagePuzzleImport onImport={loadPuzzle} />
 
         {/* Editable Sudoku input grid */}
         <SudokuGrid

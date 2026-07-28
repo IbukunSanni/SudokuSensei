@@ -38,6 +38,11 @@ def test_solve_step_returns_exactly_one_technique_step():
     assert step["step_type"] == "technique"
     assert step["focus_cells"]
     assert step["explanation"]
+    for change in step["candidate_changes"]:
+        assert change["old_candidates"]
+        assert set(change["eliminated"]) == (
+            set(change["old_candidates"]) - set(change["new_candidates"])
+        )
 
 
 def test_candidates_returns_marks_without_changing_grid():

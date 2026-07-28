@@ -5,6 +5,43 @@ deliberate path toward senior software engineering and graphics engineering.
 Work from top to bottom. Avoid adding advanced techniques until the foundation
 and solver event model are trustworthy.
 
+## Active product priorities
+
+These priorities supersede the older P0-P4 grouping below when choosing the
+next feature. Engineering-baseline work should be completed alongside the
+feature that needs it, rather than delaying the product roadmap indefinitely.
+
+1. **OCR/image import** - acquire an image, recognize a puzzle locally, require
+   review of uncertain cells, validate it, and then import it.
+2. **Swordfish** - implement the technique with positive, negative, invariant,
+   API-contract, explanation, and visualization-data tests.
+3. **Batch processing** - accept multiple puzzles, report per-puzzle outcomes,
+   and measure the workload before introducing parallel execution.
+4. **Cloud deployment** - deploy the UI and API with monitoring, rate limits,
+   upload limits, retention rules, and production smoke tests.
+5. **Authentication** - keep one-off solving anonymous; require identity for
+   private uploads, saved history, and recoverable batch jobs.
+6. **Advanced animation** - compile canonical solver steps into accessible,
+   renderer-independent teaching timelines after the preceding product flows
+   are stable.
+
+### Currently in progress - OCR/image import
+
+- [x] Choose on-device OCR as the first implementation so images are not uploaded.
+- [x] Add file-picker and mobile-camera image acquisition.
+- [ ] Add drag-and-drop and clipboard-paste image acquisition.
+- [x] Add a replaceable browser OCR adapter with progress and failure states.
+- [x] Map recognized digits and confidence into a reviewable 9x9 grid.
+- [x] Highlight uncertain/conflicting cells and require correction before import.
+- [x] Validate reviewed clues before enabling import.
+- [x] Add deterministic OCR-to-grid mapping tests.
+- [ ] Add integration tests and a versioned image fixture set.
+- [ ] Measure whole-puzzle accuracy and processing latency on that fixture set.
+
+Immediate next slice: file/mobile-camera acquisition, local OCR, and the
+editable review grid. Drag/drop, clipboard, preprocessing, and accuracy
+measurement follow in the next slice.
+
 ## Current capabilities
 
 - [x] Solve with Naked/Hidden Singles, Naked/Hidden Pairs, Naked Triples, and X-Wing.
@@ -12,7 +49,52 @@ and solver event model are trustworthy.
 - [x] Expose full-solve, single-step, health, and candidate APIs.
 - [x] Display candidates and identify candidates removed by a solving step.
 - [x] Provide API integration tests and technique-level backend tests.
+- [x] Parse compact, nine-line, and ASCII-formatted puzzle text with frontend tests.
 - [x] Track local development processes and cleanly restart both applications.
+
+## Completed milestone - Replayable solving-step contract
+
+This is the next implementation target. Complete it before adding animation
+timing, Canvas rendering, or OCR.
+
+- [x] Define one canonical `CandidateChange` model containing position,
+      eliminated values, and complete before/after candidate sets.
+- [x] Capture candidate snapshots immediately before and after every technique.
+- [x] Remove placeholder empty `old_candidates` and `new_candidates` values.
+- [x] Assert that every reported elimination equals `before - after`.
+- [x] Add replay tests proving a recorded step reproduces its resulting grid and
+      candidate state.
+- [x] Document the step-event contract with one placement example and one
+      elimination-only example.
+
+Milestone acceptance criteria:
+
+- Every candidate change is derived from real board snapshots.
+- The frontend needs no technique-specific logic to understand a step.
+- A future animation controller can replay steps without invoking the solver.
+
+## Priority 6 milestone - Visual timeline compiler
+
+Build a pure frontend layer that converts any canonical solving step into
+renderer-independent teaching phases.
+
+- [ ] Define `VisualPhase` values for `prepare`, `focus`, `explain`, `remove`,
+      `place`, and `settle`.
+- [ ] Implement a pure `compileStepTimeline(step, preferences)` function.
+- [ ] Use generic step fields only; do not branch on individual technique names.
+- [ ] Give each phase explicit duration, affected cells, candidate changes, and
+      accessible narration.
+- [ ] Add reduced-motion compilation that preserves teaching order with zero-duration
+      visual transitions.
+- [ ] Add deterministic unit tests for placement, elimination-only, and
+      constraint-propagation steps.
+- [ ] Connect the existing Apply Step flow to the timeline without adding autoplay.
+
+Milestone acceptance criteria:
+
+- The same timeline can drive the current DOM board and a future Canvas renderer.
+- Timeline compilation is deterministic and has no timers or React dependencies.
+- Solver/API state remains immutable throughout playback.
 
 ## P0 - Establish a trustworthy engineering baseline
 
@@ -39,7 +121,7 @@ Acceptance criteria:
 
 - [ ] Define typed domain objects for `Position`, `CandidateSet`,
       `CandidateChange`, `SolvedCell`, and `SolvingStep`.
-- [ ] Give every step complete before/after candidate data instead of placeholder
+- [x] Give every step complete before/after candidate data instead of placeholder
       empty `old_candidates` and `new_candidates`.
 - [ ] Separate pure board mutations from explanation formatting and API
       serialization.
@@ -57,7 +139,8 @@ Acceptance criteria:
 
 ### Repository and tooling hygiene
 
-- [ ] Ignore `.dev-processes.json`, server logs, caches, and build artifacts.
+- [x] Ignore `.dev-processes.json`.
+- [ ] Ignore server logs, Python caches, and backend build artifacts.
 - [ ] Stop tracking generated `frontend/server.*.log` files.
 - [ ] Normalize source files to UTF-8 and repair mojibake in comments and UI text.
 - [ ] Replace the manually pinned runtime-only requirements file with
@@ -80,7 +163,7 @@ Acceptance criteria:
 - [ ] Add negative tests proving techniques do not activate on near-miss patterns.
 - [ ] Add property-based tests for board and candidate invariants with Hypothesis.
 - [ ] Create a versioned puzzle corpus with expected solutions and technique traces.
-- [ ] Add contract tests for `/candidates`, `/solve-step`, and `/solve`.
+- [x] Add contract tests for `/candidates`, `/solve-step`, and `/solve`.
 - [ ] Add Playwright tests for entering a puzzle, toggling candidates, applying a
       step, inspecting removals, and navigating backward/forward.
 - [ ] Measure coverage, then target meaningful branch coverage rather than a
@@ -133,7 +216,7 @@ Acceptance criteria:
 - The interface remains usable with keyboard-only input and at 200% zoom.
 - Visual states are understandable without relying on color alone.
 
-### Remove puzzle-entry friction with image import
+### Priority 1 details - Remove puzzle-entry friction with image import
 
 - [x] First add paste/import for common 81-character and nine-line puzzle formats;
       this is the cheapest high-reliability alternative to manual cell entry.
@@ -221,9 +304,10 @@ Acceptance criteria:
 - [ ] Review completed work with a retrospective: what failed, what evidence changed
       the design, and what should become a reusable engineering rule.
 
-## Deferred until evidence supports them
+## Evidence-gated implementation details
 
-- [ ] Batch parallelism: add only after benchmarks show a real batch workload.
+- [ ] Batch parallelism: begin with a measurable sequential batch workflow, then
+      add bounded parallelism when benchmark results define safe limits.
 - [ ] Monitoring dashboard: add after meaningful metrics and operational questions exist.
 - [ ] Machine learning: do not add until there is a concrete task where deterministic
       algorithms are insufficient and an evaluation dataset exists.
