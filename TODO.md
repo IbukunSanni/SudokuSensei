@@ -130,9 +130,9 @@ Milestone acceptance criteria:
 - [x] Add a repeatable production smoke-test script.
 - [x] Upgrade the frontend to the current Next.js active-LTS security release
       after Vercel rejected the vulnerable framework version.
-- [ ] Deploy and verify the backend production health contract.
-- [ ] Deploy and verify the frontend-to-backend solving journey.
-- [ ] Confirm CI passes on the synchronized GitHub branch.
+- [x] Deploy and verify the backend production health contract.
+- [x] Deploy and verify the frontend-to-backend solving journey.
+- [x] Confirm CI passes on the synchronized GitHub branch.
 
 ## P0 - Establish a trustworthy engineering baseline
 
