@@ -72,3 +72,28 @@ def test_solver_advertises_swordfish_after_x_wing():
 
     techniques = step_by_step_solver.get_available_techniques()
     assert techniques[-2:] == ["X-Wing", "Swordfish"]
+
+
+def test_health_exposes_operational_metadata_and_headers():
+    response = client.get("/health", headers={"x-request-id": "test-request"})
+
+    assert response.status_code == 200
+    assert response.json()["environment"] == "development"
+    assert "/solve-step" in response.json()["endpoints"]
+    assert response.headers["x-request-id"] == "test-request"
+    assert response.headers["server-timing"].startswith("app;dur=")
+    assert response.headers["x-content-type-options"] == "nosniff"
+
+
+def test_cors_allows_local_frontend_without_credentials():
+    response = client.options(
+        "/solve",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+    assert "access-control-allow-credentials" not in response.headers

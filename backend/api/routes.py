@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from typing import Any, Dict, List, Optional, Tuple
 
 # Import services
+from config.settings import settings
 from models.technique_step import CandidateChange
 from services.step_by_step_solver import step_by_step_solver
 from services.validation_service import (
@@ -127,9 +128,11 @@ def detailed_health():
     return {
         "status": "healthy",
         "service": "SudokuSensei API",
-        "endpoints": ["/", "/health", "/solve"],
+        "version": "1.0",
+        "environment": settings.ENVIRONMENT,
+        "endpoints": ["/", "/health", "/candidates", "/solve", "/solve-step"],
         "cors_enabled": True,
-        "frontend_url": "http://localhost:3000",
+        "allowed_origins": settings.CORS_ORIGINS,
     }
 
 

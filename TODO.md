@@ -118,6 +118,19 @@ Milestone acceptance criteria:
 - Timeline compilation is deterministic and has no timers or React dependencies.
 - Solver/API state remains immutable throughout playback.
 
+## Currently next - Cloud deployment
+
+- [x] Define the two-project frontend/backend production topology.
+- [x] Make the frontend API URL environment-driven with a safe production default.
+- [x] Replace wildcard credentialed CORS with explicit production and preview origins.
+- [x] Add request IDs, server timing, and baseline response security headers.
+- [x] Add CI for backend tests and frontend tests, lint, and production build.
+- [x] Document environment variables, release order, smoke testing, and rollback.
+- [x] Add a repeatable production smoke-test script.
+- [ ] Deploy and verify the backend production health contract.
+- [ ] Deploy and verify the frontend-to-backend solving journey.
+- [ ] Confirm CI passes on the synchronized GitHub branch.
+
 ## P0 - Establish a trustworthy engineering baseline
 
 ### Consolidate the architecture
@@ -168,7 +181,7 @@ Acceptance criteria:
 - [ ] Replace the manually pinned runtime-only requirements file with
       `pyproject.toml` or separate runtime/dev dependency groups.
 - [ ] Add Ruff for Python linting/formatting and keep ESLint for the frontend.
-- [ ] Add GitHub Actions for backend tests, frontend lint, and production build.
+- [x] Add GitHub Actions for backend tests, frontend tests, lint, and production build.
 - [ ] Add pre-commit hooks for formatting, linting, and accidental generated files.
 
 Acceptance criteria:

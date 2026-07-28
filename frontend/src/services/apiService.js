@@ -2,11 +2,17 @@ import axios from "axios";
 
 // API endpoint configuration
 const BACKEND_URL =
-  process.env.NODE_ENV === "development"
-    ? process.env.NEXT_PUBLIC_BACKEND_URL_LOCALHOST || "http://localhost:8000"
-    : process.env.NEXT_PUBLIC_BACKEND_URL_IP ||
-      process.env.NEXT_PUBLIC_BACKEND_URL_LOCALHOST ||
-      "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_URL_IP ||
+  process.env.NEXT_PUBLIC_BACKEND_URL_LOCALHOST ||
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:8000"
+    : "https://sudoku-sensei-backend.vercel.app");
+
+const apiClient = axios.create({
+  baseURL: BACKEND_URL.replace(/\/$/, ""),
+  timeout: 15000,
+});
 
 /**
  * Service for API interactions
@@ -17,7 +23,7 @@ const apiService = {
    */
   getCandidates: async (puzzle) => {
     try {
-      const response = await axios.post(`${BACKEND_URL}/candidates`, { puzzle });
+      const response = await apiClient.post("/candidates", { puzzle });
       return response.data;
     } catch (error) {
       const errorData = error.response?.data?.detail;
@@ -46,7 +52,7 @@ const apiService = {
    */
   solvePuzzle: async (puzzle) => {
     try {
-      const response = await axios.post(`${BACKEND_URL}/solve`, { puzzle });
+      const response = await apiClient.post("/solve", { puzzle });
       return response.data;
     } catch (error) {
       const errorData = error.response?.data?.detail;
@@ -90,7 +96,7 @@ const apiService = {
    */
   applySingleStep: async (puzzle) => {
     try {
-      const response = await axios.post(`${BACKEND_URL}/solve-step`, {
+      const response = await apiClient.post("/solve-step", {
         puzzle,
       });
       return response.data;
