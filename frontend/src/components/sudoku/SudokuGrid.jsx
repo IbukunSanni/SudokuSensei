@@ -174,6 +174,15 @@ export default function SudokuGrid({
                   const isElimination = techniqueHighlight?.eliminatedCells?.some(
                     ([changeRow, changeCol]) => changeRow === rIdx && changeCol === cIdx
                   ) || false;
+                  const removedCandidates = (
+                    techniqueHighlight?.candidateRemovals || []
+                  )
+                    .filter(
+                      (change) =>
+                        change.position?.[0] === rIdx &&
+                        change.position?.[1] === cIdx
+                    )
+                    .flatMap((change) => change.eliminated || []);
 
                   // Check if this cell was solved by techniques (blue highlighting)
                   // Compares current state with original puzzle to identify solved cells
@@ -195,6 +204,7 @@ export default function SudokuGrid({
                       isElimination={isElimination}
                       candidates={candidates?.[rIdx]?.[cIdx] || []}
                       showCandidates={showCandidates}
+                      removedCandidates={removedCandidates}
                     />
                   );
                 })

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import SudokuGrid from "@/components/sudoku/SudokuGrid";
 import DuplicateWarning from "@/components/sudoku/DuplicateWarning";
+import PuzzleImport from "@/components/sudoku/PuzzleImport";
 import ResultDisplay from "@/components/sudoku/ResultDisplay";
 import ActionButton from "@/components/ui/ActionButton";
 import apiService from "@/services/apiService";
@@ -74,6 +75,16 @@ export default function Page() {
     setShowCandidates(true);
   };
 
+  const loadPuzzle = (nextPuzzle) => {
+    setPuzzle(nextPuzzle.map((row) => [...row]));
+    setOriginalPuzzle(emptyGrid);
+    setResult(null);
+    setCurrentStepIndex(-1);
+    setTechniqueHighlight(null);
+    setCandidateGrid(null);
+    setShowCandidates(false);
+  };
+
   /**
    * Sends the puzzle to the backend for solving
    */
@@ -114,10 +125,14 @@ export default function Page() {
       setTechniqueHighlight({
         focusCells: step.focus_cells || [], // Cells to highlight in green
         eliminatedCells: (step.candidate_changes || []).map(change => change.position),
+        candidateRemovals: step.candidate_changes || [],
         technique: step.technique, // Technique name (e.g., "Naked Single")
         description: step.description, // Human-readable explanation
         value: step.value // Value that was placed (if any)
       });
+      if ((step.candidate_changes || []).length > 0) {
+        setShowCandidates(true);
+      }
     }
     setResult(result);
     setLoading(false);
@@ -150,10 +165,14 @@ export default function Page() {
       setTechniqueHighlight({
         focusCells: step.focus_cells || [],
         eliminatedCells: (step.candidate_changes || []).map(change => change.position),
+        candidateRemovals: step.candidate_changes || [],
         technique: step.technique,
         description: step.description,
         value: step.value
       });
+      if ((step.candidate_changes || []).length > 0) {
+        setShowCandidates(true);
+      }
     } else {
       // Back to original puzzle
       setPuzzle(originalPuzzle);
@@ -166,13 +185,7 @@ export default function Page() {
    * Loads the default example puzzle
    */
   const loadDefaultPuzzle = () => {
-    setPuzzle(defaultPuzzle);
-    setOriginalPuzzle(emptyGrid);
-    setResult(null);
-    setCurrentStepIndex(-1);
-    setTechniqueHighlight(null);
-    setCandidateGrid(null);
-    setShowCandidates(false);
+    loadPuzzle(defaultPuzzle);
   };
 
   /**
@@ -222,6 +235,8 @@ export default function Page() {
     <div style={pageStyle}>
       <div style={containerStyle}>
         <h1 style={titleStyle}>SudokuSensei</h1>
+
+        <PuzzleImport onImport={loadPuzzle} />
 
         {/* Editable Sudoku input grid */}
         <SudokuGrid
@@ -324,13 +339,41 @@ export default function Page() {
               color: "#555"
             }}>
               <span><span style={{color: "#2e7d32"}}>■</span> Pattern cells</span>
-              <span><span style={{color: "#ef6c00"}}>■</span> Candidate removed</span>
+              <span><span style={{color: "#d32f2f"}}>■</span> Removed candidate</span>
               <span><span style={{color: "#1565c0"}}>■</span> Solved cell</span>
             </div>
             {techniqueHighlight.value && (
               <p style={{margin: "0.5rem 0 0 0", fontWeight: "bold", color: "#333"}}>
                 Value: {techniqueHighlight.value}
               </p>
+            )}
+            {techniqueHighlight.candidateRemovals?.length > 0 && (
+              <div style={{
+                marginTop: "0.85rem",
+                padding: "0.75rem",
+                backgroundColor: "#fff8f7",
+                border: "1px solid #ffcdd2",
+                borderRadius: "5px",
+                textAlign: "left"
+              }}>
+                <strong style={{color: "#c62828"}}>Why candidates changed</strong>
+                <ul style={{
+                  margin: "0.4rem 0 0",
+                  paddingLeft: "1.25rem",
+                  color: "#555",
+                  fontSize: "0.85rem"
+                }}>
+                  {techniqueHighlight.candidateRemovals.map((change, index) => (
+                    <li key={`${change.location}-${index}`}>
+                      Removed{" "}
+                      <strong style={{color: "#d32f2f"}}>
+                        {(change.eliminated || []).join(", ")}
+                      </strong>{" "}
+                      from {change.location}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         )}

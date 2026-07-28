@@ -2,9 +2,11 @@ import axios from "axios";
 
 // API endpoint configuration
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL_IP ||
-  process.env.NEXT_PUBLIC_BACKEND_URL_LOCALHOST ||
-  "http://localhost:8000";
+  process.env.NODE_ENV === "development"
+    ? process.env.NEXT_PUBLIC_BACKEND_URL_LOCALHOST || "http://localhost:8000"
+    : process.env.NEXT_PUBLIC_BACKEND_URL_IP ||
+      process.env.NEXT_PUBLIC_BACKEND_URL_LOCALHOST ||
+      "http://localhost:8000";
 
 /**
  * Service for API interactions

@@ -125,7 +125,8 @@ export default function SudokuCell({
   wasSolved = false,
   isElimination = false,
   candidates = [],
-  showCandidates = false
+  showCandidates = false,
+  removedCandidates = []
 }) {
   const cellStyle = getSudokuCellStyle(
     rowIdx,
@@ -138,7 +139,8 @@ export default function SudokuCell({
     isElimination
   );
 
-  const displayCandidates = showCandidates && value === 0;
+  const displayCandidates =
+    (showCandidates || removedCandidates.length > 0) && value === 0;
 
   if (!displayCandidates) {
     return (
@@ -175,7 +177,7 @@ export default function SudokuCell({
     gridTemplateRows: "repeat(3, 1fr)",
     alignItems: "center",
     justifyItems: "center",
-    color: isElimination ? "#e65100" : "#546e7a",
+    color: "#546e7a",
     fontSize: "0.55rem",
     fontWeight: 600,
     lineHeight: 1,
@@ -187,8 +189,34 @@ export default function SudokuCell({
     <div style={{...cellStyle, position: "relative", padding: 0}}>
       <div style={candidateStyle} aria-hidden="true">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((candidate) => (
-          <span key={candidate}>
-            {candidates.includes(candidate) ? candidate : ""}
+          <span
+            key={candidate}
+            title={
+              removedCandidates.includes(candidate)
+                ? `Candidate ${candidate} removed by this step`
+                : undefined
+            }
+            style={
+              removedCandidates.includes(candidate)
+                ? {
+                    color: "#d32f2f",
+                    backgroundColor: "#ffcdd2",
+                    borderRadius: "50%",
+                    fontWeight: 800,
+                    textDecoration: "line-through",
+                    textDecorationThickness: "2px",
+                    width: "0.85rem",
+                    height: "0.85rem",
+                    display: "grid",
+                    placeItems: "center"
+                  }
+                : undefined
+            }
+          >
+            {candidates.includes(candidate) ||
+            removedCandidates.includes(candidate)
+              ? candidate
+              : ""}
           </span>
         ))}
       </div>
