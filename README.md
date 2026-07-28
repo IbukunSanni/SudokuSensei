@@ -29,7 +29,7 @@ SudokuSensei is a sophisticated educational Sudoku solver built with modern soft
 - **Logical Technique Engine**: Implementation of complex Sudoku solving algorithms:
   - Naked Singles & Hidden Singles
   - Naked Pairs & Hidden Pairs  
-  - Naked Triples with advanced constraint satisfaction
+  - Naked Triples and X-Wing with advanced constraint satisfaction
 - **Backtracking with Optimization**: Intelligent search space pruning
 - **Data Structure Design**: Custom board representation with optimized memory usage
 
@@ -42,7 +42,7 @@ SudokuSensei is a sophisticated educational Sudoku solver built with modern soft
 
 ### **Full-Stack Development**
 - **Backend**: Python FastAPI with asynchronous request handling
-- **Frontend**: React/Next.js with TypeScript integration
+- **Frontend**: React/Next.js with modern JavaScript and JSX
 - **API Design**: RESTful endpoints with OpenAPI documentation
 - **Real-time Updates**: Dynamic UI state management
 
@@ -84,7 +84,7 @@ SudokuSensei is a sophisticated educational Sudoku solver built with modern soft
 - **React 19**: Modern UI component framework
 - **Next.js 15**: Full-stack React framework with SSR
 - **Axios**: HTTP client for API communication
-- **TypeScript**: Type-safe JavaScript development
+- **JavaScript/JSX**: Component-based client development
 
 ### **Development & Deployment**
 - **Git**: Version control with conventional commits
@@ -197,12 +197,13 @@ The solver treats Sudoku as a CSP with:
 3. **Naked Pairs**: Two cells in a unit sharing exactly two candidates
 4. **Hidden Pairs**: Two numbers restricted to the same two cells
 5. **Naked Triples**: Extension of pairs logic to three cells
+6. **X-Wing**: Row/column candidate alignment used for cross-unit elimination
 
 ### **Performance Optimizations**
 - **Constraint Propagation**: Immediate candidate elimination after each move
 - **Unit-based Processing**: Efficient row/column/box iteration
 - **Early Termination**: Stop when no more logical moves available
-- **Memory Efficiency**: Bitwise operations for candidate tracking
+- **Candidate Sets**: Python set operations provide clear, inspectable candidate tracking
 
 ## Testing & Quality Assurance
 
@@ -224,8 +225,8 @@ python -m pytest tests/ -v
 npm run lint  # Frontend
 flake8 backend/  # Backend (if configured)
 
-# Type checking
-npm run type-check  # Frontend TypeScript
+# Production build
+npm run build
 ```
 
 ## Skills Demonstrated
@@ -261,7 +262,7 @@ npm run type-check  # Frontend TypeScript
 
 ## Future Enhancements
 
-- **Advanced Techniques**: Implement X-Wing, Swordfish, and other expert-level strategies
+- **Advanced Techniques**: Implement Swordfish and other expert-level strategies
 - **Performance Monitoring**: Add metrics collection and performance dashboards
 - **Puzzle Generation**: Algorithm to create puzzles with guaranteed unique solutions
 - **Multi-threading**: Parallel processing for multiple puzzle solving

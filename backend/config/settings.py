@@ -17,18 +17,34 @@ class Settings:
     # CORS Configuration - Environment aware
     @property
     def CORS_ORIGINS(self) -> List[str]:
-        """Get CORS origins based on environment"""
-        if os.getenv("VERCEL_ENV"):  # Running on Vercel
-            return ["*"]  # Allow all origins in production
-        else:  # Local development
+        """Return explicit browser origins; never combine credentials with '*'."""
+        configured = os.getenv("CORS_ORIGINS", "")
+        if configured.strip():
             return [
-                "http://localhost:3000",
-                "http://localhost:3001",
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:3001",
+                origin.strip().rstrip("/")
+                for origin in configured.split(",")
+                if origin.strip()
             ]
+        if os.getenv("VERCEL_ENV"):
+            return ["https://sudoku-sensei.vercel.app"]
+        return [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3001",
+        ]
 
-    CORS_ALLOW_CREDENTIALS: bool = True
+    @property
+    def CORS_ORIGIN_REGEX(self) -> str | None:
+        """Allow this project's Vercel preview URLs without opening all origins."""
+        configured = os.getenv("CORS_ORIGIN_REGEX")
+        if configured:
+            return configured
+        if os.getenv("VERCEL_ENV"):
+            return r"https://sudoku-sensei(?:-[a-z0-9-]+)?\.vercel\.app"
+        return None
+
+    CORS_ALLOW_CREDENTIALS: bool = False
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]
 
@@ -39,6 +55,10 @@ class Settings:
 
     # Logging Configuration
     LOG_LEVEL: str = "INFO"
+
+    @property
+    def ENVIRONMENT(self) -> str:
+        return os.getenv("VERCEL_ENV") or os.getenv("ENVIRONMENT", "development")
 
     # Sudoku Solver Configuration
     SUDOKU_MAX_ITERATIONS: int = 100  # Default max iterations for all solvers

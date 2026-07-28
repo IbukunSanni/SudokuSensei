@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="450" height="450" viewBox="0 0 450 450">
+  <rect width="450" height="450" fill="white"/>
+  <path d="M0 0H450V450H0Z M50 0V450 M100 0V450 M150 0V450 M200 0V450 M250 0V450 M300 0V450 M350 0V450 M400 0V450 M0 50H450 M0 100H450 M0 150H450 M0 200H450 M0 250H450 M0 300H450 M0 350H450 M0 400H450" fill="none" stroke="#111" stroke-width="2"/>
+  <path d="M150 0V450 M300 0V450 M0 150H450 M0 300H450" fill="none" stroke="#111" stroke-width="5"/>
+  <g fill="#111" font-family="Arial, sans-serif" font-size="34" text-anchor="middle" dominant-baseline="central">
+    <text x="25" y="25">5</text><text x="75" y="25">3</text><text x="225" y="25">7</text>
+    <text x="25" y="75">6</text><text x="175" y="75">1</text><text x="225" y="75">9</text><text x="275" y="75">5</text>
+    <text x="75" y="125">9</text><text x="125" y="125">8</text><text x="375" y="125">6</text>
+    <text x="25" y="175">8</text><text x="225" y="175">6</text><text x="425" y="175">3</text>
+    <text x="25" y="225">4</text><text x="175" y="225">8</text><text x="275" y="225">3</text><text x="425" y="225">1</text>
+    <text x="25" y="275">7</text><text x="225" y="275">2</text><text x="425" y="275">6</text>
+    <text x="75" y="325">6</text><text x="325" y="325">2</text><text x="375" y="325">8</text>
+    <text x="175" y="375">4</text><text x="225" y="375">1</text><text x="275" y="375">9</text><text x="425" y="375">5</text>
+    <text x="225" y="425">8</text><text x="375" y="425">7</text><text x="425" y="425">9</text>
+  </g>
+</svg>

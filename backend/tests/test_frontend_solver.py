@@ -126,7 +126,19 @@ def test_step_by_step_solver():
     if result["is_solved"]:
         print_grid(result["solved_grid"], "Final Solution")
 
-    return result
+    assert result["is_solved"]
+    assert result["solved_grid"] == [
+        [5, 1, 7, 6, 3, 2, 9, 4, 8],
+        [8, 4, 2, 7, 1, 9, 6, 3, 5],
+        [6, 3, 9, 5, 8, 4, 7, 1, 2],
+        [1, 9, 6, 3, 5, 7, 8, 2, 4],
+        [3, 5, 4, 2, 6, 8, 1, 9, 7],
+        [2, 7, 8, 9, 4, 1, 5, 6, 3],
+        [9, 6, 5, 4, 7, 3, 2, 8, 1],
+        [4, 2, 1, 8, 9, 5, 3, 7, 6],
+        [7, 8, 3, 1, 2, 6, 4, 5, 9],
+    ]
+    assert result["solving_steps"]
 
 
 def test_step_types():

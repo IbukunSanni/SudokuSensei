@@ -11,8 +11,11 @@ from logic.hidden_single import apply_one_hidden_single
 from logic.hidden_pairs import apply_one_hidden_pair
 from logic.naked_pairs import apply_one_naked_pair
 from logic.naked_triples import apply_one_naked_triple
+from logic.x_wing import apply_one_x_wing
+from logic.swordfish import apply_one_swordfish
 from helpers.get_location import get_cell_location
 from config.settings import settings
+from models.technique_step import CandidateChange
 
 
 class StepByStepSolver:
@@ -34,7 +37,87 @@ class StepByStepSolver:
             ("Naked Pair", apply_one_naked_pair),
             ("Hidden Pair", apply_one_hidden_pair),
             ("Naked Triple", apply_one_naked_triple),
+            ("X-Wing", apply_one_x_wing),
+            ("Swordfish", apply_one_swordfish),
         ]
+
+    def get_candidates(self, puzzle: List[List[int]]) -> List[List[List[int]]]:
+        """Return sorted candidates for every cell without changing the puzzle."""
+        board = SudokuBoard(puzzle)
+        board.update_candidates()
+        return [
+            [sorted(cell.get_candidates()) for cell in row]
+            for row in board.grid
+        ]
+
+    def solve_one(self, puzzle: List[List[int]]) -> Dict[str, Any]:
+        """Apply the first available logical technique and return one UI-ready step."""
+        board = SudokuBoard(puzzle)
+        board.update_candidates()
+
+        for technique_name, technique_func in self.techniques:
+            before_grid = [[cell.get_value() for cell in row] for row in board.grid]
+            before_candidates = board.get_candidates_grid()
+            changed, technique_step = technique_func(board)
+            if not changed or not technique_step:
+                continue
+
+            after_grid = [[cell.get_value() for cell in row] for row in board.grid]
+            cells_solved = sum(
+                before_grid[row][col] == 0 and after_grid[row][col] != 0
+                for row in range(9)
+                for col in range(9)
+            )
+            solved_positions = [
+                f"{get_cell_location(row, col)}={after_grid[row][col]}"
+                for row in range(9)
+                for col in range(9)
+                if before_grid[row][col] == 0 and after_grid[row][col] != 0
+            ]
+            if cells_solved:
+                board.update_candidates()
+
+            after_candidates = board.get_candidates_grid()
+            candidate_changes = self.derive_candidate_changes(
+                before_grid,
+                after_grid,
+                before_candidates,
+                after_candidates,
+            )
+            step = {
+                "step_type": "technique",
+                "step_number": 1,
+                "grid": after_grid,
+                "candidates": after_candidates,
+                "technique": technique_step.technique,
+                "description": technique_step.description,
+                "cells_solved": cells_solved,
+                "candidates_eliminated": self._count_eliminations(candidate_changes),
+                "candidate_changes": [
+                    change.model_dump() for change in candidate_changes
+                ],
+                "solved_positions": solved_positions,
+                "focus_cells": technique_step.focus_cells,
+                "value": technique_step.value,
+                "extra": technique_step.extra,
+                "explanation": self._get_technique_explanation(technique_name),
+            }
+            return {
+                "solved_grid": after_grid,
+                "is_solved": board.is_solved(),
+                "message": f"Applied {technique_name}: {technique_step.description}",
+                "techniques_applied": [technique_name],
+                "solving_steps": [step],
+            }
+
+        solved_grid = [[cell.get_value() for cell in row] for row in board.grid]
+        return {
+            "solved_grid": solved_grid,
+            "is_solved": board.is_solved(),
+            "message": "No technique could be applied to this puzzle state",
+            "techniques_applied": [],
+            "solving_steps": [],
+        }
 
     def solve(self, puzzle: List[List[int]]) -> Dict[str, Any]:
         """
@@ -116,11 +199,12 @@ class StepByStepSolver:
                                     f"{get_cell_location(r, c)}={after_grid[r][c]}"
                                 )
 
-                    # Count candidate eliminations
-                    eliminations_count = 0
-                    for elimination in technique_step.eliminations:
-                        for positions in elimination.values():
-                            eliminations_count += len(positions)
+                    candidate_changes = self.derive_candidate_changes(
+                        before_grid,
+                        after_grid,
+                        before_candidates,
+                        after_candidates,
+                    )
 
                     # Create solving step from TechniqueStep
                     solving_step = {
@@ -131,13 +215,16 @@ class StepByStepSolver:
                         "technique": technique_step.technique,
                         "description": f"Step {step_number}: {technique_step.description}",
                         "cells_solved": cells_solved,
-                        "candidates_eliminated": eliminations_count,
-                        "candidate_changes": self._format_eliminations(
-                            technique_step.eliminations
+                        "candidates_eliminated": self._count_eliminations(
+                            candidate_changes
                         ),
+                        "candidate_changes": [
+                            change.model_dump() for change in candidate_changes
+                        ],
                         "solved_positions": solved_positions,
                         "focus_cells": technique_step.focus_cells,
                         "value": technique_step.value,
+                        "extra": technique_step.extra,
                         "explanation": self._get_technique_explanation(technique_name),
                     }
 
@@ -196,43 +283,52 @@ class StepByStepSolver:
             "technique": "Constraint Propagation",
             "description": description,
             "cells_solved": 0,
-            "candidates_eliminated": len(constraint_changes),
+            "candidates_eliminated": sum(
+                len(change["eliminated"]) for change in constraint_changes
+            ),
             "candidate_changes": self._format_constraint_changes(constraint_changes),
             "solved_positions": solved_positions or [],
             "explanation": "Removed candidates that conflict with filled cells in their rows, columns, and boxes",
         }
 
-    def _format_eliminations(self, eliminations: List[Dict]) -> List[Dict]:
-        """Format eliminations from TechniqueStep into API format."""
-        formatted = []
-        for elimination in eliminations:
-            for candidate, positions in elimination.items():
-                for pos in positions:
-                    formatted.append(
-                        {
-                            "position": pos,
-                            "location": get_cell_location(pos[0], pos[1]),
-                            "eliminated": [int(candidate)],
-                            "old_candidates": [],  # Would need to track this separately
-                            "new_candidates": [],  # Would need to track this separately
-                        }
+    @staticmethod
+    def derive_candidate_changes(
+        before_grid: List[List[int]],
+        after_grid: List[List[int]],
+        before_candidates: List[List[set[int]]],
+        after_candidates: List[List[set[int]]],
+    ) -> List[CandidateChange]:
+        """Derive canonical candidate changes from real board snapshots."""
+        changes = []
+        for row in range(9):
+            for col in range(9):
+                # A placement is represented by the grid/value fields, not as if
+                # all candidates were eliminated from the newly solved cell.
+                if before_grid[row][col] == 0 and after_grid[row][col] != 0:
+                    continue
+
+                old = before_candidates[row][col]
+                new = after_candidates[row][col]
+                if old - new:
+                    changes.append(
+                        CandidateChange.from_sets((row, col), old, new)
                     )
-        return formatted
+        return changes
+
+    @staticmethod
+    def _count_eliminations(changes: List[CandidateChange]) -> int:
+        return sum(len(change.eliminated) for change in changes)
 
     def _format_constraint_changes(self, constraint_changes: List[Dict]) -> List[Dict]:
         """Format constraint propagation changes."""
-        formatted = []
-        for change in constraint_changes:
-            formatted.append(
-                {
-                    "position": change["position"],
-                    "location": change["location"],
-                    "eliminated": list(change["eliminated"]),
-                    "old_candidates": list(change["old_candidates"]),
-                    "new_candidates": list(change["new_candidates"]),
-                }
-            )
-        return formatted
+        return [
+            CandidateChange.from_sets(
+                change["position"],
+                change["old_candidates"],
+                change["new_candidates"],
+            ).model_dump()
+            for change in constraint_changes
+        ]
 
     def _get_technique_explanation(self, technique_name: str) -> str:
         """Get educational explanation for each technique."""
@@ -242,6 +338,8 @@ class StepByStepSolver:
             "Hidden Pair": "When two candidates appear only in the same two cells within a unit, other candidates can be eliminated from those cells",
             "Naked Pair": "When two cells in a unit contain the same two candidates, those candidates can be eliminated from other cells in that unit",
             "Naked Triple": "When three cells in a unit contain the same three candidates between them, those candidates can be eliminated from other cells in that unit",
+            "X-Wing": "When a candidate occupies the same two columns in two rows, or the same two rows in two columns, it can be removed from the remaining cells in those cover units",
+            "Swordfish": "When a candidate in three rows is restricted to the same three columns, or vice versa, it can be removed from the remaining cells in those cover units",
         }
         return explanations.get(
             technique_name, f"Applied {technique_name} solving technique"

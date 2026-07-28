@@ -1,3 +1,4 @@
+import { useState } from "react";
 import SudokuCell from './SudokuCell';
 import { getSudokuCellStyle } from './SudokuCell';
 
@@ -76,8 +77,14 @@ export default function SudokuGrid({
   isReadOnly = false,
   solvedGrid = null,
   isSolved = false,
-  techniqueHighlight = null
+  techniqueHighlight = null,
+  candidates = null,
+  showCandidates = false
 }) {
+  const [hoveredCell, setHoveredCell] = useState(null);
+  const [focusedCell, setFocusedCell] = useState(null);
+  const activeCell = hoveredCell || focusedCell;
+
   const containerStyle = {
     display: "flex",
     justifyContent: "center",
@@ -163,12 +170,36 @@ export default function SudokuGrid({
                     highlightInfo?.affectedRows.has(rIdx) ||
                     highlightInfo?.affectedCols.has(cIdx) ||
                     highlightInfo?.affectedBoxes.has(boxKey) || false;
+                  const isActiveCell =
+                    activeCell?.row === rIdx && activeCell?.col === cIdx;
+                  const isInActiveUnit =
+                    activeCell !== null &&
+                    (
+                      activeCell.row === rIdx ||
+                      activeCell.col === cIdx ||
+                      (
+                        Math.floor(activeCell.row / 3) === Math.floor(rIdx / 3) &&
+                        Math.floor(activeCell.col / 3) === Math.floor(cIdx / 3)
+                      )
+                    );
 
                   // Check if this cell is highlighted by a technique (green highlighting)
                   // This shows where the current technique is being applied
                   const isTechniqueFocus = techniqueHighlight?.focusCells?.some(
                     ([focusRow, focusCol]) => focusRow === rIdx && focusCol === cIdx
                   ) || false;
+                  const isElimination = techniqueHighlight?.eliminatedCells?.some(
+                    ([changeRow, changeCol]) => changeRow === rIdx && changeCol === cIdx
+                  ) || false;
+                  const removedCandidates = (
+                    techniqueHighlight?.candidateRemovals || []
+                  )
+                    .filter(
+                      (change) =>
+                        change.position?.[0] === rIdx &&
+                        change.position?.[1] === cIdx
+                    )
+                    .flatMap((change) => change.eliminated || []);
 
                   // Check if this cell was solved by techniques (blue highlighting)
                   // Compares current state with original puzzle to identify solved cells
@@ -185,9 +216,20 @@ export default function SudokuGrid({
                       onChange={onCellChange}
                       isDuplicate={isDuplicate}
                       isInAffectedUnit={isInAffectedUnit}
+                      isActiveCell={isActiveCell}
+                      isInActiveUnit={isInActiveUnit}
+                      onHoverChange={(isHovered) =>
+                        setHoveredCell(isHovered ? { row: rIdx, col: cIdx } : null)
+                      }
+                      onFocusChange={(isFocused) =>
+                        setFocusedCell(isFocused ? { row: rIdx, col: cIdx } : null)
+                      }
                       isTechniqueFocus={isTechniqueFocus}
-                      techniqueInfo={isTechniqueFocus ? techniqueHighlight : null}
                       wasSolved={wasSolved}
+                      isElimination={isElimination}
+                      candidates={candidates?.[rIdx]?.[cIdx] || []}
+                      showCandidates={showCandidates}
+                      removedCandidates={removedCandidates}
                     />
                   );
                 })

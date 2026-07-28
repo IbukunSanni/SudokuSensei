@@ -1,5 +1,3 @@
-import SudokuGrid from './SudokuGrid';
-
 /**
  * Renders the error result section
  */
@@ -88,12 +86,6 @@ function SuccessResult({ successResult }) {
     textAlign: "left",
   };
 
-  const stepTitleStyle = {
-    fontWeight: "bold",
-    marginBottom: "0.5rem",
-    color: "#1976d2",
-  };
-
   const stepDescStyle = {
     marginBottom: "0.5rem",
     color: "#333",
@@ -110,29 +102,29 @@ function SuccessResult({ successResult }) {
         {successResult.message}
       </p>
 
-      <SudokuGrid 
-        puzzle={successResult.solved_grid}
-        isReadOnly={true}
-        solvedGrid={successResult.solved_grid}
-        isSolved={successResult.is_solved}
-      />
-
-      {/* Show step-by-step process if available */}
+      {/* Compact overview; the interactive grid above displays the selected step. */}
       {successResult.solving_steps && successResult.solving_steps.length > 0 && (
         <div style={stepContainerStyle}>
-          <h3>Solving Steps</h3>
-          {successResult.solving_steps.map((step, idx) => (
-            <div key={idx} style={{marginBottom: '2rem', border: '1px solid #eee', borderRadius: 8, padding: '1rem', background: '#fafbfc'}}>
-              <div style={stepTitleStyle}>Step {idx + 1}: {step.technique}</div>
-              <div style={stepDescStyle}>{step.description}</div>
-              <SudokuGrid puzzle={step.grid} isReadOnly={true} />
-              {step.explanation && (
-                <div style={{color: '#555', fontSize: '0.95rem', marginTop: '0.5rem'}}>
-                  <strong>Explanation:</strong> {step.explanation}
-                </div>
-              )}
-            </div>
-          ))}
+          <h3>Solution overview</h3>
+          <p style={stepDescStyle}>
+            {successResult.solving_steps.length} recorded steps. Use Previous and Next
+            above to inspect each change on the main grid.
+          </p>
+          <div style={{display: "flex", flexWrap: "wrap", gap: "0.5rem"}}>
+            {[...new Set(successResult.solving_steps.map(step => step.technique))].map(
+              technique => (
+                <span key={technique} style={{
+                  background: "#e3f2fd",
+                  borderRadius: "999px",
+                  color: "#1565c0",
+                  padding: "0.3rem 0.7rem",
+                  fontSize: "0.85rem"
+                }}>
+                  {technique}
+                </span>
+              )
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -5,11 +5,11 @@ Provides endpoints for solving Sudoku puzzles and health checks.
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Import services
-from services.solver_service import SudokuSolver
-from services.frontend_solver import frontend_solver
+from config.settings import settings
+from models.technique_step import CandidateChange
 from services.step_by_step_solver import step_by_step_solver
 from services.validation_service import (
     is_valid_format,
@@ -20,10 +20,6 @@ from services.validation_service import (
 # Initialize router
 router = APIRouter()
 
-# Initialize services
-solver = SudokuSolver()  # Keep for backward compatibility if needed
-
-
 # Data models
 class PuzzleInput(BaseModel):
     """Input model for Sudoku puzzle"""
@@ -32,18 +28,6 @@ class PuzzleInput(BaseModel):
         ...,
         description="9x9 Sudoku grid with 0 for empty cells and 1-9 for filled cells",
     )
-
-
-class CandidateChange(BaseModel):
-    """Model for a change in candidates for a cell"""
-
-    position: Tuple[int, int] = Field(
-        ..., description="Row and column indices of the cell"
-    )
-    location: str = Field(..., description="Human-readable location (e.g., 'R1C2')")
-    eliminated: List[int] = Field(..., description="Candidates that were eliminated")
-    old_candidates: List[int] = Field(..., description="Candidates before the change")
-    new_candidates: List[int] = Field(..., description="Candidates after the change")
 
 
 class SolvingStep(BaseModel):
@@ -72,6 +56,13 @@ class SolvingStep(BaseModel):
     focus_cells: Optional[List[Tuple[int, int]]] = Field(
         None, description="Cells that are the focus of this technique"
     )
+    step_type: Optional[str] = Field(None, description="Technique or constraint step")
+    step_number: Optional[int] = Field(None, description="Sequence number")
+    value: Optional[int] = Field(None, description="Value placed by this step")
+    explanation: Optional[str] = Field(None, description="Educational explanation")
+    extra: Optional[Dict[str, Any]] = Field(
+        None, description="Technique metadata used by generic teaching renderers"
+    )
 
 
 class SolveResponse(BaseModel):
@@ -87,6 +78,12 @@ class SolveResponse(BaseModel):
         default=None,
         description="Complete step-by-step solving process with grid states and detailed descriptions",
     )
+
+
+class CandidateResponse(BaseModel):
+    """Candidate snapshot for the current, unchanged puzzle."""
+
+    candidates: List[List[List[int]]]
 
 
 class ErrorResponse(BaseModel):
@@ -115,7 +112,7 @@ def format_error(error_type: str, message: str, suggestions: List[str]) -> dict:
         error_type=error_type,
         message=message,
         suggestions=suggestions,
-    ).dict()
+    ).model_dump()
 
 
 # API endpoints
@@ -131,9 +128,11 @@ def detailed_health():
     return {
         "status": "healthy",
         "service": "SudokuSensei API",
-        "endpoints": ["/", "/health", "/solve"],
+        "version": "1.0",
+        "environment": settings.ENVIRONMENT,
+        "endpoints": ["/", "/health", "/candidates", "/solve", "/solve-step"],
         "cors_enabled": True,
-        "frontend_url": "http://localhost:3000",
+        "allowed_origins": settings.CORS_ORIGINS,
     }
 
 
@@ -213,6 +212,35 @@ def solve_sudoku(data: PuzzleInput):
     )
 
 
+@router.post("/candidates", response_model=CandidateResponse)
+def get_candidates(data: PuzzleInput):
+    """Calculate candidates without applying a solving technique."""
+    if not is_valid_format(data.puzzle):
+        raise HTTPException(
+            status_code=400,
+            detail=format_error(
+                "INVALID_FORMAT",
+                "Puzzle must be a 9x9 grid with numbers 0-9",
+                [
+                    "Ensure your puzzle is exactly 9 rows and 9 columns",
+                    "Use 0 for empty cells and numbers 1-9 for filled cells",
+                ],
+            ),
+        )
+    if not is_solvable(data.puzzle):
+        raise HTTPException(
+            status_code=422,
+            detail=format_error(
+                "NO_SOLUTION",
+                "Candidates cannot be calculated for a puzzle with conflicting clues",
+                ["Remove duplicate values from each row, column, and 3x3 box"],
+            ),
+        )
+    return CandidateResponse(
+        candidates=step_by_step_solver.get_candidates(data.puzzle)
+    )
+
+
 @router.post("/solve-step", response_model=SolveResponse)
 def solve_single_step(data: PuzzleInput):
     """
@@ -260,71 +288,11 @@ def solve_single_step(data: PuzzleInput):
             ),
         )
 
-    # Apply single step using step-by-step solver
-    from board.board import SudokuBoard
-    from logic.naked_single import apply_one_naked_single
-    from logic.hidden_single import apply_one_hidden_single
-    from logic.naked_pairs import apply_one_naked_pair
-    from logic.hidden_pairs import apply_one_hidden_pair
-    from logic.naked_triples import apply_one_naked_triple
-    from helpers.get_location import get_cell_location
-
-    board = SudokuBoard(data.puzzle)
-    board.update_candidates()  # Initial constraint propagation
-
-    # Try techniques in order until one succeeds
-    techniques = [
-        ("Naked Single", apply_one_naked_single),
-        ("Hidden Single", apply_one_hidden_single),
-        ("Naked Pair", apply_one_naked_pair),
-        ("Hidden Pair", apply_one_hidden_pair),
-        ("Naked Triple", apply_one_naked_triple),
-    ]
-
-    for technique_name, technique_func in techniques:
-        changed, step = technique_func(board)
-        if changed and step:
-            # Apply constraint propagation after technique
-            constraint_changes = board.update_candidates()
-
-            # Build response
-            solved_grid = [[cell.get_value() for cell in row] for row in board.grid]
-
-            # Create single solving step
-            solving_step = {
-                "grid": solved_grid,
-                "candidates": board.get_candidates_grid(),
-                "technique": step.technique,
-                "description": step.description,
-                "cells_solved": 1 if step.value else 0,
-                "candidates_eliminated": len(
-                    [pos for elim in step.eliminations for pos in elim.values()]
-                ),
-                "candidate_changes": [],  # Could be enhanced to show detailed changes
-                "focus_cells": step.focus_cells,
-                "solved_positions": (
-                    [
-                        f"{get_cell_location(step.focus_cells[0][0], step.focus_cells[0][1])}={step.value}"
-                    ]
-                    if step.value and step.focus_cells
-                    else []
-                ),
-            }
-
-            return SolveResponse(
-                solved_grid=solved_grid,
-                is_solved=board.is_solved(),
-                message=f"Applied {technique_name}: {step.description}",
-                techniques_applied=[technique_name],
-                solving_steps=[solving_step],
-            )
-
-    # No technique could be applied
-    solved_grid = [[cell.get_value() for cell in row] for row in board.grid]
+    result = step_by_step_solver.solve_one(data.puzzle)
     return SolveResponse(
-        solved_grid=solved_grid,
-        is_solved=board.is_solved(),
-        message="No technique could be applied to this puzzle state",
-        techniques_applied=[],
-        solving_steps=[],
+        solved_grid=result["solved_grid"],
+        is_solved=result["is_solved"],
+        message=result["message"],
+        techniques_applied=result["techniques_applied"],
+        solving_steps=result["solving_steps"],
     )

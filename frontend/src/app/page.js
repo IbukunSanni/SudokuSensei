@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import SudokuGrid from "@/components/sudoku/SudokuGrid";
 import DuplicateWarning from "@/components/sudoku/DuplicateWarning";
+import ImagePuzzleImport from "@/components/sudoku/ImagePuzzleImport";
+import PuzzleImport from "@/components/sudoku/PuzzleImport";
 import ResultDisplay from "@/components/sudoku/ResultDisplay";
 import ActionButton from "@/components/ui/ActionButton";
 import apiService from "@/services/apiService";
+import { compileStepTimeline } from "@/utils/stepTimeline.mjs";
 import {
   defaultPuzzle,
   emptyGrid,
@@ -28,6 +31,9 @@ export default function Page() {
   const [loading, setLoading] = useState(false); // Loading state for API calls
   const [currentStepIndex, setCurrentStepIndex] = useState(-1); // Current step in navigation (-1 = original)
   const [techniqueHighlight, setTechniqueHighlight] = useState(null); // Current technique highlighting info
+  const [candidateGrid, setCandidateGrid] = useState(null);
+  const [showCandidates, setShowCandidates] = useState(false);
+  const playbackRunRef = useRef(0);
 
   // Calculate highlighting information for the current puzzle
   const highlightInfo = getHighlightInfo(puzzle);
@@ -42,22 +48,64 @@ export default function Page() {
   const handleChange = (row, col, value) => {
     // Only allow empty cells or digits 1-9
     if (value === "" || /^[1-9]$/.test(value)) {
+      playbackRunRef.current += 1;
+      setLoading(false);
       const newGrid = puzzle.map((r) => [...r]);
       newGrid[row][col] = value === "" ? 0 : parseInt(value);
       setPuzzle(newGrid);
+      setCandidateGrid(null);
+      setShowCandidates(false);
+      setResult(null);
+      setCurrentStepIndex(-1);
+      setTechniqueHighlight(null);
     }
+  };
+
+  const toggleCandidates = async () => {
+    if (showCandidates) {
+      setShowCandidates(false);
+      return;
+    }
+
+    if (!candidateGrid) {
+      setLoading(true);
+      const candidateResult = await apiService.getCandidates(puzzle);
+      setLoading(false);
+      if (candidateResult.error) {
+        setResult(candidateResult);
+        return;
+      }
+      setCandidateGrid(candidateResult.candidates);
+    }
+    setShowCandidates(true);
+  };
+
+  const loadPuzzle = (nextPuzzle) => {
+    playbackRunRef.current += 1;
+    setLoading(false);
+    setPuzzle(nextPuzzle.map((row) => [...row]));
+    setOriginalPuzzle(emptyGrid);
+    setResult(null);
+    setCurrentStepIndex(-1);
+    setTechniqueHighlight(null);
+    setCandidateGrid(null);
+    setShowCandidates(false);
   };
 
   /**
    * Sends the puzzle to the backend for solving
    */
   const solvePuzzle = async () => {
+    playbackRunRef.current += 1;
     setLoading(true);
     setOriginalPuzzle(puzzle.map(row => [...row])); // Save original state
     const result = await apiService.solvePuzzle(puzzle);
     setResult(result);
     setCurrentStepIndex(-1);
     setTechniqueHighlight(null);
+    setCandidateGrid(
+      result?.error ? null : result?.solving_steps?.[0]?.candidates || null
+    );
     setLoading(false);
   };
 
@@ -71,24 +119,89 @@ export default function Page() {
    * - Technique information display with description
    */
   const applySingleStep = async () => {
+    const runId = ++playbackRunRef.current;
     setLoading(true);
     if (originalPuzzle.every(row => row.every(cell => cell === 0))) {
       setOriginalPuzzle(puzzle.map(row => [...row])); // Save original state if not set
     }
-    const result = await apiService.applySingleStep(puzzle);
-    if (result && !result.error && result.solving_steps && result.solving_steps.length > 0) {
-      const step = result.solving_steps[0];
-      // Update puzzle with the new grid state
-      setPuzzle(result.solved_grid);
-      // Set technique highlighting for visual feedback
-      setTechniqueHighlight({
-        focusCells: step.focus_cells || [], // Cells to highlight in green
-        technique: step.technique, // Technique name (e.g., "Naked Single")
-        description: step.description, // Human-readable explanation
-        value: step.value // Value that was placed (if any)
-      });
+    const stepResult = await apiService.applySingleStep(puzzle);
+    if (runId !== playbackRunRef.current) return;
+
+    if (
+      !stepResult ||
+      stepResult.error ||
+      !stepResult.solving_steps?.length
+    ) {
+      setResult(stepResult);
+      setLoading(false);
+      return;
     }
-    setResult(result);
+
+    const step = stepResult.solving_steps[0];
+    const candidateChanges = step.candidate_changes || [];
+    const beforeCandidates = step.candidates
+      ? step.candidates.map((row) => row.map((values) => [...values]))
+      : null;
+    candidateChanges.forEach((change) => {
+      if (beforeCandidates && change.position) {
+        const [row, col] = change.position;
+        beforeCandidates[row][col] = [...change.old_candidates];
+      }
+    });
+    if (beforeCandidates) setCandidateGrid(beforeCandidates);
+
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timeline = compileStepTimeline(step, { reducedMotion });
+    const baseHighlight = {
+      focusCells: step.focus_cells || [],
+      eliminatedCells: [],
+      candidateRemovals: [],
+      technique: step.technique,
+      description: step.description,
+      value: step.value,
+    };
+
+    for (const visualPhase of timeline) {
+      if (runId !== playbackRunRef.current) return;
+      const nextHighlight = {
+        ...baseHighlight,
+        phase: visualPhase.phase,
+        phaseLabel: visualPhase.narration,
+      };
+
+      if (visualPhase.phase === "prepare") {
+        nextHighlight.focusCells = [];
+      }
+      if (visualPhase.phase === "remove") {
+        nextHighlight.eliminatedCells = candidateChanges.map(
+          (change) => change.position
+        );
+        nextHighlight.candidateRemovals = candidateChanges;
+        setCandidateGrid(step.candidates || null);
+        if (candidateChanges.length) setShowCandidates(true);
+      }
+      if (visualPhase.phase === "place") {
+        setPuzzle(stepResult.solved_grid);
+      }
+      if (visualPhase.phase === "settle") {
+        nextHighlight.eliminatedCells = candidateChanges.map(
+          (change) => change.position
+        );
+        nextHighlight.candidateRemovals = candidateChanges;
+        setPuzzle(stepResult.solved_grid);
+        setCandidateGrid(step.candidates || null);
+      }
+
+      setTechniqueHighlight(nextHighlight);
+      await new Promise((resolve) =>
+        setTimeout(resolve, visualPhase.duration)
+      );
+    }
+
+    if (runId !== playbackRunRef.current) return;
+    setResult(stepResult);
     setLoading(false);
   };
 
@@ -115,16 +228,23 @@ export default function Page() {
     if (newIndex >= 0) {
       const step = steps[newIndex];
       setPuzzle(step.grid);
+      setCandidateGrid(step.candidates || null);
       setTechniqueHighlight({
         focusCells: step.focus_cells || [],
+        eliminatedCells: (step.candidate_changes || []).map(change => change.position),
+        candidateRemovals: step.candidate_changes || [],
         technique: step.technique,
         description: step.description,
         value: step.value
       });
+      if ((step.candidate_changes || []).length > 0) {
+        setShowCandidates(true);
+      }
     } else {
       // Back to original puzzle
       setPuzzle(originalPuzzle);
       setTechniqueHighlight(null);
+      setCandidateGrid(steps[0]?.candidates || null);
     }
   };
 
@@ -132,22 +252,22 @@ export default function Page() {
    * Loads the default example puzzle
    */
   const loadDefaultPuzzle = () => {
-    setPuzzle(defaultPuzzle);
-    setOriginalPuzzle(emptyGrid);
-    setResult(null);
-    setCurrentStepIndex(-1);
-    setTechniqueHighlight(null);
+    loadPuzzle(defaultPuzzle);
   };
 
   /**
    * Clears the puzzle grid
    */
   const clearPuzzle = () => {
+    playbackRunRef.current += 1;
+    setLoading(false);
     setPuzzle(emptyGrid);
     setOriginalPuzzle(emptyGrid);
     setResult(null);
     setCurrentStepIndex(-1);
     setTechniqueHighlight(null);
+    setCandidateGrid(null);
+    setShowCandidates(false);
   };
 
   const pageStyle = {
@@ -185,6 +305,9 @@ export default function Page() {
       <div style={containerStyle}>
         <h1 style={titleStyle}>SudokuSensei</h1>
 
+        <PuzzleImport onImport={loadPuzzle} />
+        <ImagePuzzleImport onImport={loadPuzzle} />
+
         {/* Editable Sudoku input grid */}
         <SudokuGrid
           puzzle={puzzle}
@@ -192,10 +315,27 @@ export default function Page() {
           highlightInfo={highlightInfo}
           onCellChange={handleChange}
           techniqueHighlight={techniqueHighlight}
+          candidates={candidateGrid}
+          showCandidates={showCandidates}
         />
 
         {/* Duplicate warning */}
         {highlightInfo.duplicates.size > 0 && <DuplicateWarning />}
+
+        <div style={{display: "flex", justifyContent: "center", marginBottom: "1rem"}}>
+          <ActionButton
+            text={
+              loading
+                ? "Loading Candidates..."
+                : showCandidates
+                  ? "Hide Candidates"
+                  : "Show Candidates"
+            }
+            color="gray"
+            onClick={toggleCandidates}
+            disabled={loading}
+          />
+        </div>
 
         {/* Action buttons */}
         <div style={buttonContainerStyle}>
@@ -257,13 +397,67 @@ export default function Page() {
             <h3 style={{margin: "0 0 0.5rem 0", color: "#4CAF50"}}>
               {techniqueHighlight.technique}
             </h3>
+            {techniqueHighlight.phaseLabel && (
+              <p
+                aria-live="polite"
+                style={{
+                  margin: "0 0 0.5rem",
+                  color: "#1565c0",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  textTransform: "capitalize",
+                }}
+              >
+                {techniqueHighlight.phase}: {techniqueHighlight.phaseLabel}
+              </p>
+            )}
             <p style={{margin: "0", fontSize: "0.9rem", color: "#666"}}>
               {techniqueHighlight.description}
             </p>
+            <div style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "1rem",
+              marginTop: "0.75rem",
+              fontSize: "0.8rem",
+              color: "#555"
+            }}>
+              <span><span style={{color: "#2e7d32"}}>■</span> Pattern cells</span>
+              <span><span style={{color: "#d32f2f"}}>■</span> Removed candidate</span>
+              <span><span style={{color: "#1565c0"}}>■</span> Solved cell</span>
+            </div>
             {techniqueHighlight.value && (
               <p style={{margin: "0.5rem 0 0 0", fontWeight: "bold", color: "#333"}}>
                 Value: {techniqueHighlight.value}
               </p>
+            )}
+            {techniqueHighlight.candidateRemovals?.length > 0 && (
+              <div style={{
+                marginTop: "0.85rem",
+                padding: "0.75rem",
+                backgroundColor: "#fff8f7",
+                border: "1px solid #ffcdd2",
+                borderRadius: "5px",
+                textAlign: "left"
+              }}>
+                <strong style={{color: "#c62828"}}>Why candidates changed</strong>
+                <ul style={{
+                  margin: "0.4rem 0 0",
+                  paddingLeft: "1.25rem",
+                  color: "#555",
+                  fontSize: "0.85rem"
+                }}>
+                  {techniqueHighlight.candidateRemovals.map((change, index) => (
+                    <li key={`${change.location}-${index}`}>
+                      Removed{" "}
+                      <strong style={{color: "#d32f2f"}}>
+                        {(change.eliminated || []).join(", ")}
+                      </strong>{" "}
+                      from {change.location}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         )}

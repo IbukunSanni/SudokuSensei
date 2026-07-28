@@ -19,7 +19,10 @@ export function getSudokuCellStyle(
   isDuplicate = false,
   isInAffectedUnit = false,
   isTechniqueFocus = false,
-  wasSolved = false
+  wasSolved = false,
+  isElimination = false,
+  isActiveCell = false,
+  isInActiveUnit = false
 ) {
   // Base styling for all cells
   const baseStyle = {
@@ -62,12 +65,29 @@ export function getSudokuCellStyle(
   }
   // 3. SOLVED CELLS - Blue highlighting (third priority)
   // Distinguishes cells solved by techniques from original puzzle clues
+  else if (isElimination) {
+    baseStyle.backgroundColor = "#fff3e0";
+    baseStyle.color = "#ef6c00";
+    baseStyle.boxShadow = "inset 0 0 0 2px #ff9800";
+  }
+  // 4. ACTIVE CELL - Strong selection highlight
+  else if (isActiveCell) {
+    baseStyle.backgroundColor = "#dbeafe";
+    baseStyle.color = "#0f4c81";
+    baseStyle.boxShadow = "inset 0 0 0 3px #2563eb";
+  }
+  // 5. ACTIVE ROW, COLUMN, OR BOX - Context highlight
+  else if (isInActiveUnit) {
+    baseStyle.backgroundColor = "#eff6ff";
+    baseStyle.color = "#1e3a5f";
+  }
+  // 6. SOLVED CELLS - Blue highlighting
   else if (wasSolved) {
     baseStyle.backgroundColor = isInput ? "#e3f2fd" : "#bbdefb";
     baseStyle.color = "#1565c0";
     baseStyle.fontWeight = "bold";
   }
-  // 4. AFFECTED UNITS - Yellow highlighting (lowest priority)
+  // 7. AFFECTED UNITS - Yellow highlighting
   // Shows rows/columns/boxes that contain duplicate values
   else if (isInAffectedUnit) {
     baseStyle.backgroundColor = isInput ? "#fffde7" : "#fff9c4";
@@ -115,8 +135,15 @@ export default function SudokuCell({
   isDuplicate, 
   isInAffectedUnit,
   isTechniqueFocus = false,
-  techniqueInfo = null,
-  wasSolved = false
+  wasSolved = false,
+  isElimination = false,
+  isActiveCell = false,
+  isInActiveUnit = false,
+  onHoverChange = () => {},
+  onFocusChange = () => {},
+  candidates = [],
+  showCandidates = false,
+  removedCandidates = []
 }) {
   const cellStyle = getSudokuCellStyle(
     rowIdx,
@@ -125,30 +152,111 @@ export default function SudokuCell({
     isDuplicate,
     isInAffectedUnit,
     isTechniqueFocus,
-    wasSolved
+    wasSolved,
+    isElimination,
+    isActiveCell,
+    isInActiveUnit
   );
 
+  const displayCandidates =
+    (showCandidates || removedCandidates.length > 0) && value === 0;
+
+  if (!displayCandidates) {
+    return (
+      <input
+        type="text"
+        aria-label={`Row ${rowIdx + 1}, column ${colIdx + 1}`}
+        maxLength={1}
+        value={value === 0 ? "" : value}
+        onChange={(e) => onChange(rowIdx, colIdx, e.target.value)}
+        onMouseEnter={() => onHoverChange(true)}
+        onMouseLeave={() => onHoverChange(false)}
+        onFocus={() => onFocusChange(true)}
+        onBlur={() => onFocusChange(false)}
+        style={cellStyle}
+      />
+    );
+  }
+
+  const inputStyle = {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    border: 0,
+    outline: "none",
+    background: "transparent",
+    color: "transparent",
+    caretColor: "#1565c0",
+    textAlign: "center",
+    zIndex: 2,
+  };
+
+  const candidateStyle = {
+    position: "absolute",
+    inset: "2px",
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gridTemplateRows: "repeat(3, 1fr)",
+    alignItems: "center",
+    justifyItems: "center",
+    color: "#546e7a",
+    fontSize: "0.55rem",
+    fontWeight: 600,
+    lineHeight: 1,
+    pointerEvents: "none",
+    zIndex: 1,
+  };
+
   return (
-    <input
-      type="text"
-      maxLength={1}
-      value={value === 0 ? "" : value}
-      onChange={(e) => onChange(rowIdx, colIdx, e.target.value)}
-      style={cellStyle}
-      onFocus={(e) => {
-        if (!isDuplicate && !isInAffectedUnit && !isTechniqueFocus && !wasSolved) {
-          e.target.style.backgroundColor = "#e3f2fd";
-        }
-      }}
-      onBlur={(e) => {
-        if (!isDuplicate && !isInAffectedUnit && !isTechniqueFocus) {
-          if (wasSolved) {
-            e.target.style.backgroundColor = "#e3f2fd";
-          } else {
-            e.target.style.backgroundColor = "white";
-          }
-        }
-      }}
-    />
+    <div
+      style={{...cellStyle, position: "relative", padding: 0}}
+      onMouseEnter={() => onHoverChange(true)}
+      onMouseLeave={() => onHoverChange(false)}
+    >
+      <div style={candidateStyle} aria-hidden="true">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((candidate) => (
+          <span
+            key={candidate}
+            title={
+              removedCandidates.includes(candidate)
+                ? `Candidate ${candidate} removed by this step`
+                : undefined
+            }
+            style={
+              removedCandidates.includes(candidate)
+                ? {
+                    color: "#d32f2f",
+                    backgroundColor: "#ffcdd2",
+                    borderRadius: "50%",
+                    fontWeight: 800,
+                    textDecoration: "line-through",
+                    textDecorationThickness: "2px",
+                    width: "0.85rem",
+                    height: "0.85rem",
+                    display: "grid",
+                    placeItems: "center"
+                  }
+                : undefined
+            }
+          >
+            {candidates.includes(candidate) ||
+            removedCandidates.includes(candidate)
+              ? candidate
+              : ""}
+          </span>
+        ))}
+      </div>
+      <input
+        type="text"
+        aria-label={`Row ${rowIdx + 1}, column ${colIdx + 1}`}
+        maxLength={1}
+        value=""
+        onChange={(e) => onChange(rowIdx, colIdx, e.target.value)}
+        onFocus={() => onFocusChange(true)}
+        onBlur={() => onFocusChange(false)}
+        style={inputStyle}
+      />
+    </div>
   );
 }
