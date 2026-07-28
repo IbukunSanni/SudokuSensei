@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import SudokuGrid from "@/components/sudoku/SudokuGrid";
 import DuplicateWarning from "@/components/sudoku/DuplicateWarning";
 import ImagePuzzleImport from "@/components/sudoku/ImagePuzzleImport";
@@ -8,6 +8,7 @@ import PuzzleImport from "@/components/sudoku/PuzzleImport";
 import ResultDisplay from "@/components/sudoku/ResultDisplay";
 import ActionButton from "@/components/ui/ActionButton";
 import apiService from "@/services/apiService";
+import { compileStepTimeline } from "@/utils/stepTimeline.mjs";
 import {
   defaultPuzzle,
   emptyGrid,
@@ -32,6 +33,7 @@ export default function Page() {
   const [techniqueHighlight, setTechniqueHighlight] = useState(null); // Current technique highlighting info
   const [candidateGrid, setCandidateGrid] = useState(null);
   const [showCandidates, setShowCandidates] = useState(false);
+  const playbackRunRef = useRef(0);
 
   // Calculate highlighting information for the current puzzle
   const highlightInfo = getHighlightInfo(puzzle);
@@ -46,6 +48,8 @@ export default function Page() {
   const handleChange = (row, col, value) => {
     // Only allow empty cells or digits 1-9
     if (value === "" || /^[1-9]$/.test(value)) {
+      playbackRunRef.current += 1;
+      setLoading(false);
       const newGrid = puzzle.map((r) => [...r]);
       newGrid[row][col] = value === "" ? 0 : parseInt(value);
       setPuzzle(newGrid);
@@ -77,6 +81,8 @@ export default function Page() {
   };
 
   const loadPuzzle = (nextPuzzle) => {
+    playbackRunRef.current += 1;
+    setLoading(false);
     setPuzzle(nextPuzzle.map((row) => [...row]));
     setOriginalPuzzle(emptyGrid);
     setResult(null);
@@ -90,6 +96,7 @@ export default function Page() {
    * Sends the puzzle to the backend for solving
    */
   const solvePuzzle = async () => {
+    playbackRunRef.current += 1;
     setLoading(true);
     setOriginalPuzzle(puzzle.map(row => [...row])); // Save original state
     const result = await apiService.solvePuzzle(puzzle);
@@ -112,30 +119,89 @@ export default function Page() {
    * - Technique information display with description
    */
   const applySingleStep = async () => {
+    const runId = ++playbackRunRef.current;
     setLoading(true);
     if (originalPuzzle.every(row => row.every(cell => cell === 0))) {
       setOriginalPuzzle(puzzle.map(row => [...row])); // Save original state if not set
     }
-    const result = await apiService.applySingleStep(puzzle);
-    if (result && !result.error && result.solving_steps && result.solving_steps.length > 0) {
-      const step = result.solving_steps[0];
-      // Update puzzle with the new grid state
-      setPuzzle(result.solved_grid);
-      setCandidateGrid(step.candidates || null);
-      // Set technique highlighting for visual feedback
-      setTechniqueHighlight({
-        focusCells: step.focus_cells || [], // Cells to highlight in green
-        eliminatedCells: (step.candidate_changes || []).map(change => change.position),
-        candidateRemovals: step.candidate_changes || [],
-        technique: step.technique, // Technique name (e.g., "Naked Single")
-        description: step.description, // Human-readable explanation
-        value: step.value // Value that was placed (if any)
-      });
-      if ((step.candidate_changes || []).length > 0) {
-        setShowCandidates(true);
-      }
+    const stepResult = await apiService.applySingleStep(puzzle);
+    if (runId !== playbackRunRef.current) return;
+
+    if (
+      !stepResult ||
+      stepResult.error ||
+      !stepResult.solving_steps?.length
+    ) {
+      setResult(stepResult);
+      setLoading(false);
+      return;
     }
-    setResult(result);
+
+    const step = stepResult.solving_steps[0];
+    const candidateChanges = step.candidate_changes || [];
+    const beforeCandidates = step.candidates
+      ? step.candidates.map((row) => row.map((values) => [...values]))
+      : null;
+    candidateChanges.forEach((change) => {
+      if (beforeCandidates && change.position) {
+        const [row, col] = change.position;
+        beforeCandidates[row][col] = [...change.old_candidates];
+      }
+    });
+    if (beforeCandidates) setCandidateGrid(beforeCandidates);
+
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timeline = compileStepTimeline(step, { reducedMotion });
+    const baseHighlight = {
+      focusCells: step.focus_cells || [],
+      eliminatedCells: [],
+      candidateRemovals: [],
+      technique: step.technique,
+      description: step.description,
+      value: step.value,
+    };
+
+    for (const visualPhase of timeline) {
+      if (runId !== playbackRunRef.current) return;
+      const nextHighlight = {
+        ...baseHighlight,
+        phase: visualPhase.phase,
+        phaseLabel: visualPhase.narration,
+      };
+
+      if (visualPhase.phase === "prepare") {
+        nextHighlight.focusCells = [];
+      }
+      if (visualPhase.phase === "remove") {
+        nextHighlight.eliminatedCells = candidateChanges.map(
+          (change) => change.position
+        );
+        nextHighlight.candidateRemovals = candidateChanges;
+        setCandidateGrid(step.candidates || null);
+        if (candidateChanges.length) setShowCandidates(true);
+      }
+      if (visualPhase.phase === "place") {
+        setPuzzle(stepResult.solved_grid);
+      }
+      if (visualPhase.phase === "settle") {
+        nextHighlight.eliminatedCells = candidateChanges.map(
+          (change) => change.position
+        );
+        nextHighlight.candidateRemovals = candidateChanges;
+        setPuzzle(stepResult.solved_grid);
+        setCandidateGrid(step.candidates || null);
+      }
+
+      setTechniqueHighlight(nextHighlight);
+      await new Promise((resolve) =>
+        setTimeout(resolve, visualPhase.duration)
+      );
+    }
+
+    if (runId !== playbackRunRef.current) return;
+    setResult(stepResult);
     setLoading(false);
   };
 
@@ -193,6 +259,8 @@ export default function Page() {
    * Clears the puzzle grid
    */
   const clearPuzzle = () => {
+    playbackRunRef.current += 1;
+    setLoading(false);
     setPuzzle(emptyGrid);
     setOriginalPuzzle(emptyGrid);
     setResult(null);
@@ -329,6 +397,20 @@ export default function Page() {
             <h3 style={{margin: "0 0 0.5rem 0", color: "#4CAF50"}}>
               {techniqueHighlight.technique}
             </h3>
+            {techniqueHighlight.phaseLabel && (
+              <p
+                aria-live="polite"
+                style={{
+                  margin: "0 0 0.5rem",
+                  color: "#1565c0",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  textTransform: "capitalize",
+                }}
+              >
+                {techniqueHighlight.phase}: {techniqueHighlight.phaseLabel}
+              </p>
+            )}
             <p style={{margin: "0", fontSize: "0.9rem", color: "#666"}}>
               {techniqueHighlight.description}
             </p>

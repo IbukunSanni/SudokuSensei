@@ -15,15 +15,15 @@ feature that needs it, rather than delaying the product roadmap indefinitely.
    review of uncertain cells, validate it, and then import it.
 2. **Swordfish** - implement the technique with positive, negative, invariant,
    API-contract, explanation, and visualization-data tests.
-3. **Batch processing** - accept multiple puzzles, report per-puzzle outcomes,
-   and measure the workload before introducing parallel execution.
+3. **Teaching timeline and basic animation** - turn canonical solver steps into
+   accessible, deterministic visual phases on the existing DOM board.
 4. **Cloud deployment** - deploy the UI and API with monitoring, rate limits,
    upload limits, retention rules, and production smoke tests.
-5. **Authentication** - keep one-off solving anonymous; require identity for
-   private uploads, saved history, and recoverable batch jobs.
-6. **Advanced animation** - compile canonical solver steps into accessible,
-   renderer-independent teaching timelines after the preceding product flows
-   are stable.
+5. **Batch processing** - add a bounded anonymous workflow only after the
+   teaching experience is public and real usage can validate the need.
+6. **Authentication and advanced graphics** - require identity only for
+   persistence/private jobs; progress from the proven DOM timeline to Canvas
+   and WebGL as a separate graphics-engineering track.
 
 ### Priority 1 status - OCR/image import
 
@@ -54,7 +54,7 @@ fixtures, and latency optimization remain as hardening work.
       before/after candidate changes.
 - [x] Add positive, negative, replay-contract, and solver-registry tests.
 
-### Currently next - Batch processing
+### After deployment - Batch processing
 
 - [ ] Define a bounded batch request/response contract with per-puzzle results.
 - [ ] Add a sequential backend batch endpoint reusing the production solver.
@@ -95,22 +95,22 @@ Milestone acceptance criteria:
 - The frontend needs no technique-specific logic to understand a step.
 - A future animation controller can replay steps without invoking the solver.
 
-## Priority 6 milestone - Visual timeline compiler
+## Currently in progress - Visual timeline compiler
 
 Build a pure frontend layer that converts any canonical solving step into
 renderer-independent teaching phases.
 
-- [ ] Define `VisualPhase` values for `prepare`, `focus`, `explain`, `remove`,
+- [x] Define `VisualPhase` values for `prepare`, `focus`, `explain`, `remove`,
       `place`, and `settle`.
-- [ ] Implement a pure `compileStepTimeline(step, preferences)` function.
-- [ ] Use generic step fields only; do not branch on individual technique names.
-- [ ] Give each phase explicit duration, affected cells, candidate changes, and
+- [x] Implement a pure `compileStepTimeline(step, preferences)` function.
+- [x] Use generic step fields only; do not branch on individual technique names.
+- [x] Give each phase explicit duration, affected cells, candidate changes, and
       accessible narration.
-- [ ] Add reduced-motion compilation that preserves teaching order with zero-duration
+- [x] Add reduced-motion compilation that preserves teaching order with zero-duration
       visual transitions.
-- [ ] Add deterministic unit tests for placement, elimination-only, and
+- [x] Add deterministic unit tests for placement, elimination-only, and
       constraint-propagation steps.
-- [ ] Connect the existing Apply Step flow to the timeline without adding autoplay.
+- [x] Connect the existing Apply Step flow to the timeline without adding autoplay.
 
 Milestone acceptance criteria:
 
